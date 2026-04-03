@@ -17,6 +17,4 @@ update-mocks.js
 # Review docs
 docs/review-fase-2.md
 
-# OpenCode skills (local only)
-.opencode/skills/code-smells/
-.opencode/skills/commit/
+

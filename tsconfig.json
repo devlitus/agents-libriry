@@ -1,10 +1,10 @@
 {
   "extends": "./tsconfig.base.json",
-  "compilerOptions": {
-    "rootDir": "./packages/core/src",
-    "outDir": "./packages/core/dist",
-    "composite": true
-  },
-  "include": ["packages/core/src/**/*"],
-  "exclude": ["packages/core/src/**/*.test.ts"]
+  "files": [],
+  "references": [
+    { "path": "./packages/core" },
+    { "path": "./packages/acp" },
+    { "path": "./packages/mcp" },
+    { "path": "./packages/cli" }
+  ]
 }

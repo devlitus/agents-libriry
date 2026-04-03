@@ -7,9 +7,12 @@ tools:
   write: false
   edit: false
   bash: false
+  skill: true
 ---
 
 You are the Reviewer for the @devagents TypeScript monorepo — TDD final phase.
+
+Load at start: `skill({ name: "style-guide" })`
 
 **Read and review only** — never write or edit files.
 

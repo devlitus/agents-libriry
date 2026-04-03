@@ -6,13 +6,13 @@
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
+      "types": "./dist/index.d.ts",
       "import": "./dist/index.mjs",
-      "require": "./dist/index.js",
-      "types": "./dist/index.d.ts"
+      "require": "./dist/index.js"
     }
   },
   "scripts": {
-    "build": "tsup"
+    "build": "tsup && tsc --declaration --emitDeclarationOnly --outDir dist --rootDir src"
   },
   "dependencies": {
     "better-sqlite3": "^11.0.0",

@@ -2,7 +2,7 @@
   "name": "@devagents/acp",
   "version": "0.0.1",
   "bin": {
-    "devagents-acp": "./dist/index.cjs"
+    "devagents-acp": "./dist/index.js"
   },
   "scripts": {
     "build": "tsup"

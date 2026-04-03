@@ -2,7 +2,7 @@
   "name": "@devagents/cli",
   "version": "0.0.1",
   "bin": {
-    "devagents": "./dist/index.cjs"
+    "devagents": "./dist/index.js"
   },
   "scripts": {
     "build": "tsup"

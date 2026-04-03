@@ -2,7 +2,7 @@
   "name": "@devagents/mcp",
   "version": "0.0.1",
   "bin": {
-    "devagents-mcp": "./dist/index.cjs"
+    "devagents-mcp": "./dist/index.js"
   },
   "scripts": {
     "build": "tsup"

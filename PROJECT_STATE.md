@@ -8,17 +8,17 @@
 
 ## Current phase
 
-**Phase 1 — Core Fundamentals** (in progress)
+**Phase 2 — Agents** (completed)
 
 ---
 
 ## Phase progress
 
 | Phase | Status | Completed tasks |
-|-------|--------|-----------------|
+|-------|--------|----------------|
 | 0 — Scaffolding | completed | 0.1-0.8 |
-| 1 — Core fundamentals | in progress | 1.1, 1.2, 1.3, 1.4, 1.5 (partial) |
-| 2 — Agents | not started | — |
+| 1 — Core fundamentals | completed | 1.1-1.5 |
+| 2 — Agents | completed | 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 2.7, 2.8 |
 | 3 — Transports | not started | — |
 | 4 — CLI + polish | not started | — |
 
@@ -26,73 +26,149 @@
 
 ## Completed tasks
 
-- **1.1** LLM Abstraction — providers (ollama, anthropic, openai), factory, types
-  Files: `packages/core/src/llm/types.ts`, `packages/core/src/llm/ollama-client.ts`, `packages/core/src/llm/anthropic-client.ts`, `packages/core/src/llm/openai-client.ts`, `packages/core/src/llm/create-client.ts`, `packages/core/src/llm/index.ts`
+### Phase 0 — Scaffolding
+- Monorepo setup, TypeScript config, tsup, vitest, workspace config
+
+### Phase 1 — Core Fundamentals (COMPLETED)
+- **1.1** LLM Abstraction — providers, factory, types
 - **1.1.8** LLM error classes
-  Files: `packages/core/src/llm/errors.ts`
 - **1.2** SQLite Memory — service, types, CRUD operations
-  Files: `packages/core/src/memory/types.ts`, `packages/core/src/memory/sqlite-memory.ts`, `packages/core/src/memory/index.ts`
 - **1.2.8** Memory error classes
-  Files: `packages/core/src/memory/errors.ts`
-- **1.3** Indexer — file-scanner, language-detector, test-detector, convention-detector, main indexer
-  Files: `packages/core/src/indexer/types.ts`, `packages/core/src/indexer/file-scanner.ts`, `packages/core/src/indexer/language-detector.ts`, `packages/core/src/indexer/test-detector.ts`, `packages/core/src/indexer/convention-detector.ts`, `packages/core/src/indexer/indexer.ts`, `packages/core/src/indexer/index.ts`
+- **1.3** Indexer — all components
 - **1.4** Shared types and config loader
-  Files: `packages/core/src/types.ts`, `packages/core/src/config-loader.ts`
 - **1.5** Barrel export
-  Files: `packages/core/src/index.ts`
 
----
+### Phase 2 — Agents (COMPLETED)
 
-## In progress
+#### Common Agent Base (2.1)
+- **2.1.1** Agent interface types (Agent, AgentContext, AgentResult, AgentName)
+- **2.1.2** ToolProvider interface (readFile, writeFile, listDirectory, runCommand)
+- **2.1.3** Prompt builder functions
+- **2.1.4** Response parser functions with retry
 
-_Gaps identified vs. plan:_
-- MemoryService missing `getAgentMemoryBySession` and `clearSessionMemory` — **FIXED** but tests skipped (no native sqlite3 bindings)
-- Missing dedicated tests for each LLM provider with FakeLLMProvider — **FIXED**
-- Test coverage not measured (>80% LLM, >85% Memory, >80% Indexer)
+#### Architect (2.3)
+- **2.3.1** ArchitectPlan types
+- **2.3.2** ArchitectAgent implementation
+- **2.3.3** File selector for relevant files
+- **2.3.4** Tests
+
+#### Coder (2.4)
+- **2.4.1** CoderOutput types
+- **2.4.2** CoderAgent with confirmation flow
+- **2.4.3** Diff generator (diff + chalk)
+- **2.4.4** Dependency detector
+- **2.4.5** Standalone mode (without Architect)
+
+#### Tester (2.5)
+- **2.5.1** TesterOutput types
+- **2.5.2** TesterAgent implementation
+- **2.5.3** Test command generator (Jest, Vitest, Mocha, pytest, cargo)
+- **2.5.4** Standalone mode (/tester <file>)
+
+#### Reviewer (2.6)
+- **2.6.1** ReviewerOutput types
+- **2.6.2** ReviewerAgent implementation
+- **2.6.3** Security static checks (credentials, SQL injection, eval)
+- **2.6.4** Observation formatter with severity icons
+- **2.6.5** Correction cycle (Coder re-activated on Reviewer issues)
+
+#### Orchestrator (2.2 & 2.7)
+- **2.2.1** Orchestrator class with event streaming
+- **2.2.2** Command parser (/architect, /coder, /tester, /reviewer, /plan)
+- **2.2.3** Agent selector for free prompts
+- **2.2.4** Plan generator
+- **2.2.5** ConfirmationHandler (NoOp implementation)
+- **2.2.6** Event types defined
+- **2.2.7** Session saving
+- **2.2.8** Orchestrator unit tests
+- **2.7.1** Register agents in Orchestrator
+- **2.7.2** Result passing between agents via previousResults map
+- **2.7.3** Integration test for full flow
+
+#### Exports (2.8)
+- **2.8.1** Barrel exports for agents and orchestrator
 
 ---
 
 ## Files written so far
 
-- `packages/core/src/llm/types.ts` — LlmClient, CompletionOptions, LlmProvider
-- `packages/core/src/llm/ollama-client.ts` — OllamaClient
-- `packages/core/src/llm/anthropic-client.ts` — AnthropicClient
-- `packages/core/src/llm/openai-client.ts` — OpenAIClient
-- `packages/core/src/llm/create-client.ts` — createClient, detectProvider
-- `packages/core/src/llm/errors.ts` — LLMProviderNotAvailableError, LLMTimeoutError, LLMConfigurationError
-- `packages/core/src/llm/index.ts` — barrel export
-- `packages/core/src/llm/llm.test.ts` — FakeLLMProvider and error tests
-- `packages/core/src/llm/create-client.test.ts` — factory tests
-- `packages/core/src/memory/types.ts` — MemoryService, ProjectIndex, AgentMemoryEntry, SessionHistoryEntry
-- `packages/core/src/memory/sqlite-memory.ts` — SqliteMemoryService
-- `packages/core/src/memory/errors.ts` — MemoryDatabaseError, MemoryNotFoundError
-- `packages/core/src/memory/index.ts` — barrel export
-- `packages/core/src/memory/sqlite-memory.test.ts` — memory CRUD tests
-- `packages/core/src/indexer/types.ts` — IndexerConfig, DetectedProject, FileTreeNode, ProjectConventions
-- `packages/core/src/indexer/file-scanner.ts` — scanDirectory
-- `packages/core/src/indexer/language-detector.ts` — detectLanguage
-- `packages/core/src/indexer/test-detector.ts` — detectTestFramework
-- `packages/core/src/indexer/convention-detector.ts` — detectConventions
-- `packages/core/src/indexer/indexer.ts` — Indexer class
-- `packages/core/src/indexer/index.ts` — barrel export
-- `packages/core/src/indexer/indexer.test.ts` — indexer integration tests
-- `packages/core/src/types.ts` — DevAgentsConfig, AgentName, AgentResult, UserConfirmation
-- `packages/core/src/config-loader.ts` — loadConfig
-- `packages/core/src/index.ts` — main barrel export
+### Agent base (2.1)
+- `packages/core/src/agents/types.ts` — Agent, AgentContext, AgentResult, AgentName
+- `packages/core/src/agents/tool-provider.ts` — ToolProvider, CommandResult
+- `packages/core/src/agents/orchestrator-types.ts` — OrchestratorEvent, PlanDefinition, ConfirmationHandler
+- `packages/core/src/agents/prompts.ts` — buildArchitectPrompt, buildCoderPrompt, buildTesterPrompt, buildReviewerPrompt
+- `packages/core/src/agents/response-parser.ts` — parseArchitectResponse, parseCoderResponse, etc.
+- `packages/core/src/agents/index.ts` — barrel export
+
+### Orchestrator (2.2 & 2.7)
+- `packages/core/src/orchestrator/orchestrator.ts` — Orchestrator class
+- `packages/core/src/orchestrator/command-parser.ts` — parseCommand
+- `packages/core/src/orchestrator/agent-selector.ts` — selectAgentsForPrompt
+- `packages/core/src/orchestrator/plan-generator.ts` — generatePlan, formatPlanForDisplay
+- `packages/core/src/orchestrator/confirmation.ts` — NoOpConfirmationHandler
+- `packages/core/src/orchestrator/index.ts` — barrel export
+- `packages/core/src/orchestrator/orchestrator.test.ts` — Unit tests for Orchestrator
+- `packages/core/src/orchestrator/orchestrator.integration.test.ts` — End-to-end flow tests
+
+### Agent types (2.3-2.6)
+- `packages/core/src/agents/architect/types.ts` — ArchitectPlan
+- `packages/core/src/agents/coder/types.ts` — CoderOutput
+- `packages/core/src/agents/tester/types.ts` — TesterOutput
+- `packages/core/src/agents/reviewer/types.ts` — ReviewerOutput
+
+### Agent implementations
+- `packages/core/src/agents/architect/architect.ts` — ArchitectAgent
+- `packages/core/src/agents/architect/file-selector.ts` — selectRelevantFiles
+- `packages/core/src/agents/coder/coder.ts` — CoderAgent
+- `packages/core/src/agents/coder/diff-generator.ts` — generateDiff
+- `packages/core/src/agents/coder/dependency-detector.ts` — detectDependencies
+- `packages/core/src/agents/tester/tester.ts` — TesterAgent
+- `packages/core/src/agents/tester/test-command.ts` — generateTestCommand
+- `packages/core/src/agents/reviewer/reviewer.ts` — ReviewerAgent
+- `packages/core/src/agents/reviewer/security-checks.ts` — runSecurityChecks
+- `packages/core/src/agents/reviewer/formatter.ts` — formatObservation
+
+### Tests
+- `packages/core/src/agents/types.test.ts`
+- `packages/core/src/agents/tool-provider.test.ts`
+- `packages/core/src/agents/orchestrator-types.test.ts`
+- `packages/core/src/agents/architect/architect.test.ts`
+- `packages/core/src/agents/coder/coder.test.ts`
+- `packages/core/src/agents/tester/tester.test.ts`
+- `packages/core/src/agents/reviewer/reviewer.test.ts`
+
+### Phase 1 files
+- `packages/core/src/llm/` — all LLM provider files
+- `packages/core/src/memory/` — all memory files
+- `packages/core/src/indexer/` — all indexer files
+- `packages/core/src/config-loader.ts`
+- `packages/core/src/types.ts`
 
 ---
 
 ## Last session summary
 
-Fixed gaps in Phase 1 implementation:
-- Added `packages/core/src/llm/errors.ts` with LLMProviderNotAvailableError, LLMTimeoutError, LLMConfigurationError
-- Added `packages/core/src/memory/errors.ts` with MemoryDatabaseError, MemoryNotFoundError
-- Added `getAgentMemoryBySession` and `clearSessionMemory` to MemoryService interface and SqliteMemoryService implementation
-- Updated barrel exports to include new error classes
-- Created `llm.test.ts` with FakeLLMProvider tests and error class tests
-- Added tests for new MemoryService methods
+Phase 2 (Agents) fully completed:
+- Implemented all 4 agents: Architect, Coder, Tester, Reviewer
+- Integrated agents into Orchestrator with result passing via previousResults map
+- Implemented correction cycle: Reviewer → Coder when issues found
+- Added diff generation (diff + chalk), dependency detection, security static checks
+- Added standalone mode for Coder and Tester agents
+- 83 tests passing, build clean across all packages
 
-Build passes (pnpm -r build). Tests pass (26 passed, 8 skipped due to no native sqlite3 bindings).
+Bug fix applied:
+- Removed `as any` from orchestrator.ts (reviewer correction cycle)
+- Now uses proper `ReviewerOutput` and `ReviewObservation` types
+- Build and tests pass after fix
+
+---
+
+## Next steps
+
+**Phase 3 — Transports:**
+- ACP transport (Zed, JetBrains, VS Code)
+- MCP transport (Claude Code, Cursor)
+- Protocol adapters
 
 ---
 

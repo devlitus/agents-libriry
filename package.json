@@ -1,0 +1,22 @@
+{
+  "name": "devagents",
+  "version": "0.0.1",
+  "private": true,
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "pnpm -r build",
+    "test": "vitest --run",
+    "lint": "eslint . --ext .ts",
+    "clean": "pnpm -r exec rm -rf dist"
+  },
+  "devDependencies": {
+    "tsup": "^8.3.0",
+    "vitest": "^2.1.0",
+    "@vitest/coverage-v8": "^2.1.0",
+    "@changesets/cli": "^2.27.0",
+    "@types/node": "^22.0.0",
+    "typescript": "^5.6.0"
+  }
+}

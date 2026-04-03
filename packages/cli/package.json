@@ -1,0 +1,14 @@
+{
+  "name": "@devagents/cli",
+  "version": "0.0.1",
+  "bin": {
+    "devagents": "./dist/index.cjs"
+  },
+  "scripts": {
+    "build": "tsup"
+  },
+  "dependencies": {
+    "@devagents/core": "workspace:*",
+    "@clack/prompts": "^0.7.0"
+  }
+}

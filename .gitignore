@@ -1,0 +1,9 @@
+node_modules/
+dist/
+.env
+.devagents/
+*.db
+coverage/
+.turbo/
+.DS_Store
+*.log

@@ -1,0 +1,14 @@
+{
+  "name": "@devagents/acp",
+  "version": "0.0.1",
+  "bin": {
+    "devagents-acp": "./dist/index.cjs"
+  },
+  "scripts": {
+    "build": "tsup"
+  },
+  "dependencies": {
+    "@devagents/core": "workspace:*",
+    "@agentclientprotocol/sdk": "^0.18.0"
+  }
+}

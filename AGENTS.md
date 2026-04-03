@@ -7,6 +7,7 @@
 ## OVERVIEW
 
 @devagents is a coding agent team that installs in any project as a dev dependency. The team coordinates specialized agents (Orchestrator, Architect, Coder, Tester, Reviewer) to read repos, plan, generate code, and write files — with user confirmation for every write.
+alway responded in Spanish
 
 ## STRUCTURE
 

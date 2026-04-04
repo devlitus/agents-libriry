@@ -2,7 +2,7 @@ import { buildCoderPrompt } from "../prompts.js";
 import { parseCoderResponse } from "../response-parser.js";
 import { generateDiff } from "./diff-generator.js";
 import { detectDependencies } from "./dependency-detector.js";
-import type { Agent, AgentContext, AgentResult, AgentName } from "../types.js";
+import type { Agent, AgentContext, AgentExecutionResult, AgentName } from "../types.js";
 import type { ConfirmationHandler } from "../orchestrator-types.js";
 import type { ArchitectPlan } from "../architect/types.js";
 import type { CoderOutput } from "./types.js";
@@ -26,7 +26,7 @@ export class CoderAgent implements Agent {
     this.confirmation = options?.confirmation ?? new NoOpConfirmationHandler();
   }
 
-  async execute(context: AgentContext): Promise<AgentResult> {
+  async execute(context: AgentContext): Promise<AgentExecutionResult> {
     const messages: string[] = [];
     
     // 1. Get ArchitectPlan

@@ -1,4 +1,4 @@
-import type { Agent, AgentContext, AgentResult } from "../types.js";
+import type { Agent, AgentContext, AgentExecutionResult } from "../types.js";
 import { buildArchitectPrompt } from "../prompts.js";
 import { parseArchitectResponse, tryParseWithRetry } from "../response-parser.js";
 import { selectRelevantFiles } from "./file-selector.js";
@@ -6,7 +6,7 @@ import { selectRelevantFiles } from "./file-selector.js";
 export class ArchitectAgent implements Agent {
   readonly name = "architect";
 
-  async execute(context: AgentContext): Promise<AgentResult> {
+  async execute(context: AgentContext): Promise<AgentExecutionResult> {
     const { prompt, projectIndex, llm, memory, tools, sessionId } = context;
 
     try {

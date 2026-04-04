@@ -4,7 +4,7 @@ import { generatePlan, formatPlanForDisplay } from "./plan-generator.js";
 import { NoOpConfirmationHandler } from "./confirmation.js";
 import { ArchitectAgent, CoderAgent, TesterAgent, ReviewerAgent } from "../agents/index.js";
 import type { OrchestratorEvent, PlanDefinition } from "../agents/orchestrator-types.js";
-import type { Agent, AgentContext, AgentResult, AgentName } from "../agents/types.js";
+import type { Agent, AgentContext, AgentExecutionResult, AgentName } from "../agents/types.js";
 import type { ConfirmationHandler } from "../agents/orchestrator-types.js";
 import type { ReviewerOutput, ReviewObservation } from "../agents/reviewer/types.js";
 import type { LlmClient } from "../llm/types.js";
@@ -153,7 +153,7 @@ export class Orchestrator {
       sessionId,
       prompt,
       projectIndex,
-      previousResults: new Map<AgentName, AgentResult>(),
+      previousResults: new Map<AgentName, AgentExecutionResult>(),
       config: this.config,
       llm: this.llm,
       memory: this.memory,

@@ -9,6 +9,7 @@ tools:
   bash: true
   skill: true
 permission:
+  read: allow
   write: allow
   edit: allow
   bash:
@@ -71,26 +72,17 @@ Always `.js` on relative imports. No circular deps.
 
 ## Output protocol
 
-Return the complete content of every implementation file using this exact format.
-The orchestrator (dev) reads this output and writes the files to disk — you cannot write them directly.
-The orchestrator will then run `pnpm test` to verify green.
+Write every implementation file directly to disk using `write` or `edit` tools.
+Read existing files with `read` before modifying them to avoid overwriting unrelated code.
+After writing all files, run `pnpm test --run [test-file]` to confirm green.
 
-For each file:
+After all files are written and tests pass, output:
 
-```
-### FILE: packages/core/src/agents/coder-agent.ts
-```ts
-// ... full file content here
-```
-```
-
-After all files:
 ```
 ### SUMMARY
-Files: N implementation files
-Status: all tests should pass once orchestrator writes these files
+Files: N implementation files written
+Status: all tests green
 Refactor applied: YES
 ```
 
-Do not truncate file content. Do not describe what the code does — just output the complete file content.
-The orchestrator writes exactly what you return and then runs the tests.
+Do not output full file contents in text — write them to disk directly.

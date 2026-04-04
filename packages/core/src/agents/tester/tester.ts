@@ -1,4 +1,4 @@
-import type { Agent, AgentContext, AgentResult, AgentName } from "../types.js";
+import type { Agent, AgentContext, AgentExecutionResult, AgentName } from "../types.js";
 import type { ConfirmationHandler } from "../orchestrator-types.js";
 import type { CoderOutput } from "../coder/types.js";
 import type { TesterOutput } from "./types.js";
@@ -20,7 +20,7 @@ export class TesterAgent implements Agent {
     this.confirmation = options.confirmation || new NoOpConfirmationHandler();
   }
 
-  async execute(context: AgentContext): Promise<AgentResult> {
+  async execute(context: AgentContext): Promise<AgentExecutionResult> {
     const filesToTest = await this.determineFilesToTest(context);
 
     if (filesToTest.length === 0) {

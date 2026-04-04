@@ -42,11 +42,14 @@ export type {
   AgentMemoryEntry,
   SessionHistoryEntry,
   MemoryService,
-  AgentName,
   UserConfirmation,
   AgentResult,
   DevAgentsConfig,
 } from "./memory/types.js";
+
+export type {
+  AgentName,
+} from "./types.js";
 
 export {
   SqliteMemoryService,
@@ -111,5 +114,38 @@ export {
   getEnvConfig,
   ConfigLoaderError,
 } from "./config-loader.js";
+
+// Orchestrator exports
+export { Orchestrator } from "./orchestrator/orchestrator.js";
+export type { OrchestratorOptions } from "./orchestrator/orchestrator.js";
+export { NoOpConfirmationHandler } from "./orchestrator/confirmation.js";
+export { parseCommand } from "./orchestrator/command-parser.js";
+export { selectAgentsForPrompt } from "./orchestrator/agent-selector.js";
+export { generatePlan, formatPlanForDisplay } from "./orchestrator/plan-generator.js";
+
+// Agent types exports
+export type {
+  ToolProvider,
+  CommandResult,
+} from "./agents/tool-provider.js";
+
+export type {
+  OrchestratorEvent,
+  PlanDefinition,
+  PlanStep,
+  ConfirmationHandler,
+} from "./agents/orchestrator-types.js";
+
+export type {
+  Agent,
+  AgentContext,
+  AgentExecutionResult,
+} from "./agents/types.js";
+
+// Agent exports
+export { ArchitectAgent } from "./agents/architect/architect.js";
+export { CoderAgent } from "./agents/coder/coder.js";
+export { TesterAgent } from "./agents/tester/tester.js";
+export { ReviewerAgent } from "./agents/reviewer/reviewer.js";
 
 export const VERSION = "0.0.1";

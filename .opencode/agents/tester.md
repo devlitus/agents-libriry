@@ -9,6 +9,7 @@ tools:
   bash: false
   skill: true
 permission:
+  read: allow
   write: allow
   edit: allow
 ---
@@ -128,26 +129,15 @@ Add any extra edge cases you identify, but cover the contract first.
 
 ## Output protocol
 
-Return the complete content of every test file using this exact format.
-The orchestrator (dev) reads this output and writes the files to disk — you cannot write them directly.
+Write every test file directly to disk using `write` or `edit` tools.
+Read existing test files with `read` before modifying them to avoid overwriting unrelated tests.
 
-For each file:
+After all files are written, output:
 
-```
-### FILE: packages/core/src/agents/coder-agent.test.ts
-```ts
-import { describe, it, expect } from 'vitest';
-// ... full file content here
-```
-```
-
-After all files:
 ```
 ### SUMMARY
-Files: N test files
+Files: N test files written
 Tests: N total (all red until coder implements)
 Extra cases beyond architect contracts: [list or "none"]
 Ready for coder.
 ```
-
-Do not truncate file content. The orchestrator writes exactly what you return.

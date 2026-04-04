@@ -1,7 +1,7 @@
 export type {
   Agent,
   AgentContext,
-  AgentResult,
+  AgentExecutionResult,
   AgentName,
 } from "./types.js";
 

@@ -3,7 +3,6 @@ export type {
   AgentMemoryEntry,
   SessionHistoryEntry,
   MemoryService,
-  AgentName,
   UserConfirmation,
   AgentResult,
   DevAgentsConfig,

@@ -1,4 +1,8 @@
-import type { AgentName, AgentResult } from "./types.js";
+import type { AgentName } from "./types.js";
+import type { AgentExecutionResult } from "./types.js";
+import type { UserConfirmation } from "../types.js";
+
+export type { UserConfirmation };
 
 export interface PlanStep {
   agent: AgentName;
@@ -20,13 +24,11 @@ export type OrchestratorEvent =
   | { type: "plan_rejected" }
   | { type: "agent_start"; agent: AgentName }
   | { type: "agent_progress"; agent: AgentName; message: string }
-  | { type: "agent_complete"; agent: AgentName; result: AgentResult }
+  | { type: "agent_complete"; agent: AgentName; result: AgentExecutionResult }
   | { type: "confirm_file"; path: string; diff: string }
   | { type: "confirm_command"; command: string }
   | { type: "session_complete"; success: boolean }
   | { type: "error"; message: string };
-
-export type UserConfirmation = "yes" | "no" | "edit";
 
 export interface ConfirmationHandler {
   confirmPlan(plan: PlanDefinition): Promise<UserConfirmation>;

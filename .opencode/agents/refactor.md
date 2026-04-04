@@ -9,6 +9,7 @@ tools:
   bash: true
   skill: true
 permission:
+  read: allow
   write: allow
   edit: allow
   bash:
@@ -114,16 +115,10 @@ BLOCKED · packages/core/src/memory/store.ts:22
   Error: [paste test failure]
 ```
 
-After all findings:
+Write changes directly to disk using `edit` or `write` tools.
+Read each file with `read` before touching it — already stated above, but required before every edit.
 
-```
-### FILE: packages/core/src/llm/client.ts
-```ts
-// ... full file content
-```
-```
-
-End with:
+After all findings, end with:
 ```
 Refactor complete: N fixed · N skipped · N blocked
 Tests: green / FAILING (list)

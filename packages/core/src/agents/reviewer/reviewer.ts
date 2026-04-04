@@ -1,4 +1,4 @@
-import type { Agent, AgentContext, AgentResult } from "../types.js";
+import type { Agent, AgentContext, AgentExecutionResult } from "../types.js";
 import type { ReviewerOutput, ReviewObservation } from "./types.js";
 import { buildReviewerPrompt } from "../prompts.js";
 import { parseReviewerResponse, tryParseWithRetry } from "../response-parser.js";
@@ -10,7 +10,7 @@ import type { ArchitectPlan } from "../architect/types.js";
 export class ReviewerAgent implements Agent {
   readonly name = "reviewer";
 
-  async execute(context: AgentContext): Promise<AgentResult> {
+  async execute(context: AgentContext): Promise<AgentExecutionResult> {
     const coderResult = context.previousResults.get("coder");
     if (!coderResult || !coderResult.success || !coderResult.data) {
       return {

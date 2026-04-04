@@ -1,5 +1,5 @@
-import { readFile } from "fs/promises";
-import { join } from "path";
+import { readFile } from "node:fs/promises";
+import { join } from "node:path";
 
 export type Framework =
   | "express"
@@ -23,39 +23,124 @@ export interface LanguageDetection {
   configFiles: string[];
 }
 
-const FRAMEWORK_PATTERNS: Record<string, Record<string, Framework>> = {
-  "package.json": {
-    express: "express",
-    "react-scripts": "react",
-    next: "next",
-    "@nestjs/core": "nestjs",
+/**
+ * Handler that extracts language + framework from config file content.
+ */
+type ConfigFileHandler = (content: string) => { language?: string; framework: Framework };
+
+const HANDLERS: Record<string, ConfigFileHandler> = {
+  "package.json": (content: string) => {
+    let pkg: Record<string, unknown>;
+    try {
+      pkg = JSON.parse(content);
+    } catch {
+      // Malformed JSON — treat as generic JS project
+      return { language: "javascript", framework: null };
+    }
+    const deps = { ...(pkg.dependencies as Record<string, string> ?? {}), ...(pkg.devDependencies as Record<string, string> ?? {}) };
+    let framework: Framework = null;
+
+    if ("express" in deps) framework = "express";
+    else if ("react-scripts" in deps) framework = "react";
+    else if ("next" in deps) framework = "next";
+    else if ("@nestjs/core" in deps) framework = "nestjs";
+
+    const language = "typescript" in deps || "@types/node" in deps ? "typescript" : "javascript";
+    return { language, framework };
   },
-  "pyproject.toml": {
-    fastapi: "fastapi",
-    django: "django",
-    flask: "flask",
+
+  "pyproject.toml": (content: string) => {
+    let framework: Framework = null;
+    const lines = content.split("\n");
+
+    for (const line of lines) {
+      if (line.includes("fastapi")) { framework = "fastapi"; break; }
+      if (line.includes("django")) { framework = "django"; break; }
+      if (line.includes("flask")) { framework = "flask"; break; }
+    }
+
+    return { language: "python", framework };
   },
-  "requirements.txt": {
-    fastapi: "fastapi",
-    django: "django",
-    flask: "flask",
+
+  "requirements.txt": (content: string) => {
+    let framework: Framework = null;
+    const lines = content.split("\n");
+
+    for (const line of lines) {
+      if (line.includes("fastapi")) { framework = "fastapi"; break; }
+      if (line.includes("django")) { framework = "django"; break; }
+      if (line.includes("flask")) { framework = "flask"; break; }
+    }
+
+    return { language: "python", framework };
   },
-  "Cargo.toml": {
-    axum: "axum",
-    actix: "actix",
+
+  "Cargo.toml": (content: string) => {
+    let framework: Framework = null;
+    const lines = content.split("\n");
+
+    for (const line of lines) {
+      // Normalize: "axum", 'axum', or axum
+      const normalized = line.replace(/^(\s*)"([^"]+)".*$/, (_, __, name) => name)
+        .replace(/^(\s*)'([^']+)'.*$/, (_, __, name) => name)
+        .replace(/^(\s*)([a-zA-Z0-9_-]+)\s*=.*$/, (_, __, name) => name)
+        .trim();
+
+      if (normalized === "axum") { framework = "axum"; break; }
+      if (normalized === "actix-web") { framework = "actix"; break; }
+    }
+
+    return { language: "rust", framework };
   },
-  "go.mod": {
-    "github.com/gin-gonic/gin": "gin",
-    "github.com/labstack/echo": "echo",
+
+  "go.mod": (content: string) => {
+    let framework: Framework = null;
+    const lines = content.split("\n");
+
+    for (const line of lines) {
+      if (line.includes("github.com/gin-gonic/gin")) { framework = "gin"; break; }
+      if (line.includes("github.com/labstack/echo")) { framework = "echo"; break; }
+    }
+
+    return { language: "go", framework };
   },
-  "pom.xml": {
-    "spring-boot": "spring",
+
+  "pom.xml": (content: string) => {
+    let framework: Framework = null;
+    const lines = content.split("\n");
+
+    for (const line of lines) {
+      if (line.includes("org.springframework.boot")) { framework = "spring"; break; }
+    }
+
+    return { language: "java", framework };
   },
-  "build.gradle": {
-    "org.springframework.boot": "spring",
+
+  "build.gradle": (content: string) => {
+    let framework: Framework = null;
+    const lines = content.split("\n");
+
+    for (const line of lines) {
+      if (line.includes("org.springframework.boot")) { framework = "spring"; break; }
+    }
+
+    return { language: "kotlin", framework };
   },
-  "composer.json": {
-    laravel: "laravel",
+
+  "composer.json": (content: string) => {
+    let pkg: Record<string, unknown>;
+    try {
+      pkg = JSON.parse(content);
+    } catch {
+      // Malformed JSON — treat as PHP project without framework
+      return { language: "php", framework: null };
+    }
+    const deps = { ...(pkg.require as Record<string, string> ?? {}), ...(pkg["require-dev"] as Record<string, string> ?? {}) };
+    let framework: Framework = null;
+
+    if ("laravel/framework" in deps) framework = "laravel";
+
+    return { language: "php", framework };
   },
 };
 
@@ -91,86 +176,14 @@ export async function detectLanguage(
 
     detected.configFiles.push(configFile);
 
-    if (configFile === "package.json") {
-      const pkg = JSON.parse(content);
-      const deps = { ...pkg.dependencies, ...pkg.devDependencies };
-
-      // Check for framework first
-      for (const [dep, framework] of Object.entries(FRAMEWORK_PATTERNS[configFile])) {
-        if (dep in deps) {
-          detected.framework = framework;
-          break;
-        }
+    const handler = HANDLERS[configFile];
+    if (handler) {
+      const result = handler(content);
+      if (result.language && detected.language === "generic") {
+        detected.language = result.language;
       }
-
-      // Detect language based on dependencies
-      if ("typescript" in deps || "@types/node" in deps) {
-        detected.language = "typescript";
-      } else {
-        detected.language = "javascript";
-      }
-    } else if (configFile === "pyproject.toml" || configFile === "requirements.txt") {
-      detected.language = "python";
-      const lines = content.split("\n");
-
-      for (const line of lines) {
-        for (const [dep, framework] of Object.entries(FRAMEWORK_PATTERNS[configFile])) {
-          if (line.startsWith(dep) || line.startsWith(`"${dep}`) || line.startsWith(`'${dep}`)) {
-            detected.framework = framework;
-            break;
-          }
-        }
-        if (detected.framework) break;
-      }
-    } else if (configFile === "Cargo.toml") {
-      detected.language = "rust";
-      const lines = content.split("\n");
-
-      for (const line of lines) {
-        for (const [dep, framework] of Object.entries(FRAMEWORK_PATTERNS[configFile])) {
-          if (line.startsWith(`"${dep}`) || line.startsWith(`'${dep}`)) {
-            detected.framework = framework;
-            break;
-          }
-        }
-        if (detected.framework) break;
-      }
-    } else if (configFile === "go.mod") {
-      detected.language = "go";
-      const lines = content.split("\n");
-
-      for (const line of lines) {
-        for (const [dep, framework] of Object.entries(FRAMEWORK_PATTERNS[configFile])) {
-          if (line.includes(dep)) {
-            detected.framework = framework;
-            break;
-          }
-        }
-        if (detected.framework) break;
-      }
-    } else if (configFile === "pom.xml" || configFile === "build.gradle") {
-      detected.language = configFile === "pom.xml" ? "java" : "kotlin";
-      const lines = content.split("\n");
-
-      for (const line of lines) {
-        for (const [dep, framework] of Object.entries(FRAMEWORK_PATTERNS[configFile])) {
-          if (line.includes(dep)) {
-            detected.framework = framework;
-            break;
-          }
-        }
-        if (detected.framework) break;
-      }
-    } else if (configFile === "composer.json") {
-      detected.language = "php";
-      const pkg = JSON.parse(content);
-      const deps = { ...pkg.require, ...pkg["require-dev"] };
-
-      for (const [dep, framework] of Object.entries(FRAMEWORK_PATTERNS[configFile])) {
-        if (dep in deps) {
-          detected.framework = framework;
-          break;
-        }
+      if (result.framework) {
+        detected.framework = result.framework;
       }
     }
   }

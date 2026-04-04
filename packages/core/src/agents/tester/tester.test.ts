@@ -1,7 +1,8 @@
 import { describe, it, expect, vi } from "vitest";
 import type { TesterOutput } from "./types.js";
 import { TesterAgent } from "./tester.js";
-import { generateTestCommand } from "./test-command.js";
+import { generateTestCommand, validateTestPath } from "./test-command.js";
+import { InvalidTestPathError } from "./invalid-path-error.js";
 import type { AgentContext } from "../types.js";
 import type { LlmClient } from "../../llm/types.js";
 import type { MemoryService } from "../../memory/types.js";
@@ -54,6 +55,27 @@ describe("generateTestCommand", () => {
     expect(generateTestCommand("pytest", "test_foo.py")).toBe("pytest test_foo.py");
     expect(generateTestCommand("cargo", "src/foo.rs")).toBe("cargo test src/foo.rs");
     expect(generateTestCommand("unknown", "foo.test.ts")).toBe("npm test -- foo.test.ts");
+  });
+
+  it("escapes semicolon in path for vitest", () => {
+    expect(generateTestCommand("vitest", "foo;bar.test.ts")).toBe("npx vitest run foo\\;bar.test.ts");
+  });
+
+  it("escapes ampersand in path for jest", () => {
+    expect(generateTestCommand("jest", "foo&bar.test.ts")).toBe("npm test -- --testPathPattern=foo\\&bar.test.ts");
+  });
+
+  it("escapes dollar sign in path for mocha", () => {
+    expect(generateTestCommand("mocha", "foo$bar.test.ts")).toBe("npx mocha foo\\$bar.test.ts");
+  });
+
+  it("escapes backtick in path for pytest", () => {
+    expect(generateTestCommand("pytest", "foo`bar`.py")).toBe("pytest foo\\`bar\\`.py");
+  });
+
+  it("returns unchanged command when path has no metacharacters", () => {
+    expect(generateTestCommand("vitest", "foo.test.ts")).toBe("npx vitest run foo.test.ts");
+    expect(generateTestCommand("jest", "api.test.ts")).toBe("npm test -- --testPathPattern=api.test.ts");
   });
 });
 
@@ -121,5 +143,51 @@ describe("TesterAgent", () => {
     
     const data = result.data as TesterOutput;
     expect(data.testResult?.passed).toBe(true);
+  });
+});
+
+describe("validateTestPath", () => {
+  it("returns void when path has no shell metacharacters", () => {
+    expect(() => validateTestPath("foo.test.ts")).not.toThrow();
+    expect(() => validateTestPath("src/__tests__/api.test.ts")).not.toThrow();
+    expect(() => validateTestPath("test-file.ts")).not.toThrow();
+  });
+
+  it("throws InvalidTestPathError when path contains semicolon", () => {
+    expect(() => validateTestPath("foo;bar.test.ts")).toThrow(InvalidTestPathError);
+    expect(() => validateTestPath("foo;bar.test.ts")).toThrow('Invalid test path "foo;bar.test.ts"');
+  });
+
+  it("throws InvalidTestPathError when path contains pipe", () => {
+    expect(() => validateTestPath("foo|bar.test.ts")).toThrow(InvalidTestPathError);
+    expect(() => validateTestPath("foo|bar.test.ts")).toThrow('Invalid test path "foo|bar.test.ts"');
+  });
+
+  it("throws InvalidTestPathError when path contains ampersand", () => {
+    expect(() => validateTestPath("foo&bar.test.ts")).toThrow(InvalidTestPathError);
+    expect(() => validateTestPath("foo&bar.test.ts")).toThrow('Invalid test path "foo&bar.test.ts"');
+  });
+
+  it("throws InvalidTestPathError when path contains backtick", () => {
+    expect(() => validateTestPath("foo`bar`.test.ts")).toThrow(InvalidTestPathError);
+    expect(() => validateTestPath("foo`bar`.test.ts")).toThrow('Invalid test path "foo`bar`.test.ts"');
+  });
+
+  it("throws InvalidTestPathError when path contains dollar sign", () => {
+    expect(() => validateTestPath("foo$bar.test.ts")).toThrow(InvalidTestPathError);
+    expect(() => validateTestPath("foo$bar.test.ts")).toThrow('Invalid test path "foo$bar.test.ts"');
+  });
+
+  it("throws InvalidTestPathError when path contains parentheses", () => {
+    expect(() => validateTestPath("foo(bar).test.ts")).toThrow(InvalidTestPathError);
+    expect(() => validateTestPath("foo(bar).test.ts")).toThrow('Invalid test path "foo(bar).test.ts"');
+  });
+
+  it("throws InvalidTestPathError when path contains backtick command substitution", () => {
+    expect(() => validateTestPath("foo`ls`.test.ts")).toThrow(InvalidTestPathError);
+  });
+
+  it("throws InvalidTestPathError when path contains $() command substitution", () => {
+    expect(() => validateTestPath("foo$(ls).test.ts")).toThrow(InvalidTestPathError);
   });
 });

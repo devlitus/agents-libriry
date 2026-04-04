@@ -5,7 +5,7 @@ import type { TesterOutput } from "./types.js";
 import { NoOpConfirmationHandler } from "../../orchestrator/confirmation.js";
 import { buildTesterPrompt } from "../prompts.js";
 import { parseTesterResponse, tryParseWithRetry } from "../response-parser.js";
-import { generateTestCommand } from "./test-command.js";
+import { generateTestCommand, validateTestPath } from "./test-command.js";
 import { generateDiff } from "../coder/diff-generator.js";
 
 export interface TesterAgentOptions {
@@ -70,7 +70,9 @@ export class TesterAgent implements Agent {
     if (prompt && prompt.trim().length > 0) {
       const match = prompt.match(/^\/tester\s+(.*)$/);
       if (match && match[1].trim()) {
-        return [match[1].trim()];
+        const path = match[1].trim();
+        validateTestPath(path);
+        return [path];
       }
       return this.askLlmForFileToTest(context);
     }

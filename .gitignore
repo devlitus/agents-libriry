@@ -9,6 +9,9 @@ coverage/
 *.log
 *.tsbuildinfo
 
+# Test fixtures (temporary setup directories)
+.test-setup-*/
+
 # Dev scripts (one-off helpers)
 fix-tester-mock.js
 run-test.js

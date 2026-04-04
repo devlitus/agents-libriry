@@ -1,9 +1,30 @@
 {
   "name": "@devagents/cli",
-  "version": "0.0.1",
+  "version": "0.1.0",
+  "description": "CLI for @devagents — setup and check commands",
+  "keywords": ["ai", "agents", "cli", "setup", "devtools"],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/devagents/devagents.git",
+    "directory": "packages/cli"
+  },
   "bin": {
     "devagents": "./dist/index.js"
   },
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "tsup"
   },

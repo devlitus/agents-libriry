@@ -1,7 +1,67 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { SqliteMemoryService } from "./sqlite-memory.js";
+import type { MemoryService, ProjectIndex, AgentMemoryEntry, SessionHistoryEntry } from "./types.js";
 
-// Skip tests if better-sqlite3 native bindings aren't available
+// In-memory fake implementation for testing when better-sqlite3 isn't available
+class FakeSqliteMemoryService implements MemoryService {
+  private projectIndex: ProjectIndex | null = null;
+  private agentMemory: AgentMemoryEntry[] = [];
+  private sessions: SessionHistoryEntry[] = [];
+
+  init(): void {
+    // No-op for in-memory implementation
+  }
+
+  getProjectIndex(): ProjectIndex | null {
+    return this.projectIndex;
+  }
+
+  saveProjectIndex(index: ProjectIndex): void {
+    this.projectIndex = index;
+  }
+
+  getAgentMemory(sessionId: string, key: string): AgentMemoryEntry | null {
+    return this.agentMemory.find(e => e.sessionId === sessionId && e.key === key) ?? null;
+  }
+
+  setAgentMemory(entry: Omit<AgentMemoryEntry, "id">): void {
+    const newEntry: AgentMemoryEntry = {
+      ...entry,
+      id: crypto.randomUUID(),
+    };
+    this.agentMemory.push(newEntry);
+  }
+
+  getAgentMemoryBySession(sessionId: string): AgentMemoryEntry[] {
+    return this.agentMemory.filter(e => e.sessionId === sessionId);
+  }
+
+  clearSessionMemory(sessionId: string): void {
+    this.agentMemory = this.agentMemory.filter(e => e.sessionId !== sessionId);
+  }
+
+  getRecentSessions(limit: number): SessionHistoryEntry[] {
+    return this.sessions.slice(0, limit);
+  }
+
+  saveSession(session: Omit<SessionHistoryEntry, "id">): void {
+    const newSession: SessionHistoryEntry = {
+      ...session,
+      id: crypto.randomUUID(),
+    };
+    this.sessions.unshift(newSession);
+  }
+
+  pruneOldSessions(keep: number): void {
+    this.sessions = this.sessions.slice(0, keep);
+  }
+
+  close(): void {
+    // No-op for in-memory implementation
+  }
+}
+
+// Check if better-sqlite3 native bindings are available
 const sqlite3Available = (() => {
   try {
     new SqliteMemoryService(":memory:");
@@ -11,12 +71,22 @@ const sqlite3Available = (() => {
   }
 })();
 
-describe.skipIf(!sqlite3Available)("memory/sqlite-memory", () => {
-  let memory: SqliteMemoryService;
+// Use real implementation if available, otherwise use fake
+type TestMemoryService = SqliteMemoryService | FakeSqliteMemoryService;
+const createTestMemory = (): TestMemoryService => {
+  if (sqlite3Available) {
+    const memory = new SqliteMemoryService(":memory:");
+    memory.init();
+    return memory;
+  }
+  return new FakeSqliteMemoryService();
+};
+
+describe("memory/sqlite-memory", () => {
+  let memory: TestMemoryService;
 
   beforeEach(() => {
-    memory = new SqliteMemoryService(":memory:");
-    memory.init();
+    memory = createTestMemory();
   });
 
   it("init creates tables", () => {

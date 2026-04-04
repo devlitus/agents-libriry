@@ -1,8 +1,11 @@
-import { readFile } from "fs/promises";
-import { join, isAbsolute } from "path";
+import { readFile } from "node:fs/promises";
+import { join } from "node:path";
 import type { DevAgentsConfig } from "./memory/types.js";
 import { LlmProvider } from "./llm/types.js";
 
+/**
+ * Error thrown when config loading or parsing fails.
+ */
 export class ConfigLoaderError extends Error {
   name = "ConfigLoaderError";
   cause?: unknown;
@@ -10,6 +13,14 @@ export class ConfigLoaderError extends Error {
   constructor(message: string, cause?: unknown) {
     super(message);
     this.cause = cause;
+  }
+
+  toJSON(): unknown {
+    return {
+      name: this.name,
+      message: this.message,
+      ...(process.env.NODE_ENV !== "production" ? { cause: this.cause, stack: this.stack } : {}),
+    };
   }
 }
 
@@ -30,57 +41,58 @@ const DEFAULT_CONFIG: DevAgentsConfig = {
   },
 };
 
+/**
+ * Returns a deep copy of the default configuration.
+ */
 export function getDefaultConfig(): DevAgentsConfig {
   return JSON.parse(JSON.stringify(DEFAULT_CONFIG));
 }
 
-export async function loadConfig(
-  projectRoot?: string
-): Promise<DevAgentsConfig> {
-  const root = projectRoot ?? process.cwd();
-  const configPath = join(root, "agents.config.ts");
-
+/**
+ * Parses a JSON configuration string into a partial DevAgentsConfig.
+ * Uses JSON.parse directly for secure parsing (no eval).
+ */
+export function parseJsonConfig(content: string): Partial<DevAgentsConfig> {
   try {
-    const content = await readFile(configPath, "utf-8");
-    const config = parseConfigFile(content);
-
-    return mergeConfig(DEFAULT_CONFIG, config);
-  } catch (error) {
-    if ((error as NodeJS.ErrnoException).code === "ENOENT") {
-      return getDefaultConfig();
-    }
-    throw new ConfigLoaderError(
-      `Failed to load config from ${configPath}`,
-      error
-    );
-  }
-}
-
-function parseConfigFile(content: string): Partial<DevAgentsConfig> {
-  // Remove type annotations and export keyword for evaluation
-  const cleaned = content
-    .replace(/import\s+.*?from\s+['"].*?['"]/g, "")
-    .replace(/export\s+default\s+/g, "")
-    .replace(/:\s*DevAgentsConfig/g, "")
-    .replace(/:\s*LlmProvider/g, "")
-    .replace(/:\s*boolean/g, "")
-    .replace(/:\s*string\[\]/g, "")
-    .replace(/:\s*string/g, "")
-    .replace(/=\s*\{/g, ": {")
-    .replace(/\}\s*;?\s*$/, "}");
-
-  try {
-    // Evaluate the config object
-    const fn = new Function(`return ${cleaned}`);
-    return fn() as Partial<DevAgentsConfig>;
+    return JSON.parse(content) as Partial<DevAgentsConfig>;
   } catch {
     return {};
   }
 }
 
+/**
+ * Loads configuration from the project root.
+ *
+ * Resolution order:
+ * 1. agents.config.json (recommended — secure, uses JSON.parse)
+ * 2. Default configuration (if no config file found)
+ *
+ * @deprecated TypeScript config files (agents.config.ts) are no longer supported.
+ *             Use JSON config files (agents.config.json) instead for secure parsing.
+ */
+export async function loadConfig(
+  projectRoot?: string,
+): Promise<DevAgentsConfig> {
+  const root = projectRoot ?? process.cwd();
+
+  // Only support JSON config (secure, uses JSON.parse)
+  const jsonPath = join(root, "agents.config.json");
+  try {
+    const content = await readFile(jsonPath, "utf-8");
+    const config = parseJsonConfig(content);
+    return mergeConfig(DEFAULT_CONFIG, config);
+  } catch (jsonError) {
+    if ((jsonError as NodeJS.ErrnoException).code !== "ENOENT") {
+      throw new ConfigLoaderError(`Failed to parse ${jsonPath}`, jsonError);
+    }
+    // No config file — return defaults silently
+    return getDefaultConfig();
+  }
+}
+
 function mergeConfig(
   defaults: DevAgentsConfig,
-  overrides: Partial<DevAgentsConfig>
+  overrides: Partial<DevAgentsConfig>,
 ): DevAgentsConfig {
   return {
     llm: {
@@ -102,6 +114,10 @@ function mergeConfig(
   };
 }
 
+/**
+ * Reads configuration from environment variables.
+ * Priority: ANTHROPIC_API_KEY > OPENAI_API_KEY > NODE_ENV=development (Ollama)
+ */
 export function getEnvConfig(): Partial<DevAgentsConfig> {
   const config: Partial<DevAgentsConfig> = {};
 

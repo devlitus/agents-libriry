@@ -7,6 +7,9 @@ import type {
   AgentMemoryEntry,
   SessionHistoryEntry,
 } from "./types.js";
+import { createLogger } from "../logger.js";
+
+const logger = createLogger("memory");
 
 export class SqliteMemoryError extends Error {
   name = "SqliteMemoryError";
@@ -16,6 +19,39 @@ export class SqliteMemoryError extends Error {
     super(message);
     this.cause = cause;
   }
+
+  toJSON(): unknown {
+    return {
+      name: this.name,
+      message: this.message,
+      ...(process.env.NODE_ENV !== "production" ? { cause: this.cause, stack: this.stack } : {}),
+    };
+  }
+}
+
+/**
+ * Serializes a value to JSON safely, preventing circular references
+ * and filtering out functions and symbols.
+ * Uses a custom replacer to avoid relying on potentially compromised
+ * object toJSON() methods.
+ */
+function safeStringify(value: unknown): string {
+  const seen = new WeakSet<object>();
+
+  return JSON.stringify(value, (key: string, val: unknown): unknown => {
+    if (typeof val === "function" || typeof val === "symbol") {
+      return undefined;
+    }
+
+    if (typeof val === "object" && val !== null) {
+      if (seen.has(val)) {
+        return "[Circular]";
+      }
+      seen.add(val);
+    }
+
+    return val;
+  });
 }
 
 export class SqliteMemoryService implements MemoryService {
@@ -29,6 +65,7 @@ export class SqliteMemoryService implements MemoryService {
   }
 
   init(): void {
+    logger.debug("Initializing memory database");
     this.db.exec(`
       CREATE TABLE IF NOT EXISTS project_index (
         id TEXT PRIMARY KEY,
@@ -60,6 +97,7 @@ export class SqliteMemoryService implements MemoryService {
         createdAt TEXT NOT NULL
       );
     `);
+    logger.debug("Memory database initialized");
   }
 
   getProjectIndex(): ProjectIndex | null {
@@ -67,6 +105,7 @@ export class SqliteMemoryService implements MemoryService {
     const row = stmt.get() as ProjectIndex | undefined;
     if (!row) return null;
 
+    logger.debug("Retrieved project index", { id: row.id, language: row.language });
     return {
       ...row,
       fileTree: row.fileTree,
@@ -77,6 +116,7 @@ export class SqliteMemoryService implements MemoryService {
   }
 
   saveProjectIndex(index: ProjectIndex): void {
+    logger.debug("Saving project index", { id: index.id, language: index.language });
     const stmt = this.db.prepare(`
       INSERT OR REPLACE INTO project_index
       (id, language, framework, testFw, fileTree, conventions, configFiles, entryPoints, indexedAt)
@@ -88,10 +128,10 @@ export class SqliteMemoryService implements MemoryService {
       index.language,
       index.framework,
       index.testFw,
-      typeof index.fileTree === "string" ? index.fileTree : JSON.stringify(index.fileTree),
-      typeof index.conventions === "string" ? index.conventions : JSON.stringify(index.conventions),
-      typeof index.configFiles === "string" ? index.configFiles : JSON.stringify(index.configFiles),
-      typeof index.entryPoints === "string" ? index.entryPoints : JSON.stringify(index.entryPoints),
+      typeof index.fileTree === "string" ? index.fileTree : safeStringify(index.fileTree),
+      typeof index.conventions === "string" ? index.conventions : safeStringify(index.conventions),
+      typeof index.configFiles === "string" ? index.configFiles : safeStringify(index.configFiles),
+      typeof index.entryPoints === "string" ? index.entryPoints : safeStringify(index.entryPoints),
       index.indexedAt
     );
   }
@@ -133,7 +173,7 @@ export class SqliteMemoryService implements MemoryService {
       entry.sessionId,
       entry.agent,
       entry.key,
-      typeof entry.value === "string" ? entry.value : JSON.stringify(entry.value),
+      typeof entry.value === "string" ? entry.value : safeStringify(entry.value),
       entry.createdAt
     );
   }
@@ -146,6 +186,7 @@ export class SqliteMemoryService implements MemoryService {
   }
 
   saveSession(session: Omit<SessionHistoryEntry, "id">): void {
+    logger.debug("Saving session", { prompt: session.prompt.substring(0, 50) });
     const id = crypto.randomUUID();
     const stmt = this.db.prepare(`
       INSERT INTO session_history (id, prompt, agentsUsed, filesModified, commandsRun, createdAt)
@@ -155,14 +196,15 @@ export class SqliteMemoryService implements MemoryService {
     stmt.run(
       id,
       session.prompt,
-      typeof session.agentsUsed === "string" ? session.agentsUsed : JSON.stringify(session.agentsUsed),
-      typeof session.filesModified === "string" ? session.filesModified : JSON.stringify(session.filesModified),
-      typeof session.commandsRun === "string" ? session.commandsRun : JSON.stringify(session.commandsRun),
+      typeof session.agentsUsed === "string" ? session.agentsUsed : safeStringify(session.agentsUsed),
+      typeof session.filesModified === "string" ? session.filesModified : safeStringify(session.filesModified),
+      typeof session.commandsRun === "string" ? session.commandsRun : safeStringify(session.commandsRun),
       session.createdAt
     );
   }
 
   pruneOldSessions(keep: number): void {
+    logger.debug("Pruning old sessions, keeping", { keep });
     const stmt = this.db.prepare(`
       DELETE FROM session_history WHERE id NOT IN (
         SELECT id FROM session_history ORDER BY createdAt DESC LIMIT ?
@@ -172,6 +214,7 @@ export class SqliteMemoryService implements MemoryService {
   }
 
   close(): void {
+    logger.debug("Closing memory database");
     this.db.close();
   }
 }

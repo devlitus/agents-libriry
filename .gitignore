@@ -7,3 +7,17 @@ coverage/
 .turbo/
 .DS_Store
 *.log
+*.tsbuildinfo
+
+# Test fixtures (temporary setup directories)
+.test-setup-*/
+
+# Dev scripts (one-off helpers)
+fix-tester-mock.js
+run-test.js
+update-mocks.js
+
+# Review docs
+docs/review-fase-2.md
+
+

@@ -1,13 +1,29 @@
 import type { AgentContext } from "./types.js";
 import type { ArchitectPlan } from "./architect/types.js";
 
+const MAX_USER_INPUT_LENGTH = 10_000;
+
+/**
+ * Sanitizes user input to prevent prompt injection attacks.
+ * Redacts delimiter-like patterns and limits input length.
+ */
+function sanitizePromptInput(input: string): string {
+  return input
+    .replace(/---\s*(SYSTEM|INSTRUCTION|END)/gi, "[REDACTED]")
+    .slice(0, MAX_USER_INPUT_LENGTH);
+}
+
 export function buildArchitectPrompt(context: AgentContext): string {
   const { projectIndex, prompt } = context;
   const { language, framework, conventions } = projectIndex;
 
   return `You are the Architect agent for a ${language} project${framework ? ` using ${framework}` : ""}.
 
-Your task: ${prompt}
+--- USER REQUEST (untrusted) ---
+${sanitizePromptInput(prompt)}
+--- END OF USER INPUT ---
+
+Your task: ${sanitizePromptInput(prompt)}
 
 Project conventions:
 - Naming: ${conventions.namingStyle}
@@ -33,8 +49,12 @@ export function buildCoderPrompt(context: AgentContext, plan: ArchitectPlan): st
 
   let prompt = `You are the Coder agent for a ${language} project${framework ? ` using ${framework}` : ""}.
 
+--- USER REQUEST (untrusted) ---
+${sanitizePromptInput(taskPrompt)}
+--- END OF USER INPUT ---
+
 Task/Context:
-${taskPrompt}
+${sanitizePromptInput(taskPrompt)}
 
 `;
 
@@ -83,6 +103,10 @@ export function buildTesterPrompt(context: AgentContext, filesWritten: string[])
 
   return `You are the Tester agent.
 
+--- FILES TO TEST (internal) ---
+${filesWritten.join(", ")}
+--- END OF FILES ---
+
 Generate tests for these files: ${filesWritten.join(", ")}
 
 Test framework: ${testFramework || "generic"}
@@ -109,11 +133,14 @@ export function buildReviewerPrompt(
 
   return `You are the Reviewer agent.
 
-Review these files: ${filesWritten.join(", ")}
+--- FILES TO REVIEW (internal) ---
+${filesWritten.join(", ")}
+--- END OF FILES ---
 
-Original plan files:
+--- ORIGINAL PLAN (internal) ---
 ${plan.filesToCreate.map((f) => `- ${f.path}: ${f.description}`).join("\n")}
 ${plan.filesToModify.map((f) => `- ${f.path}: ${f.change}`).join("\n")}
+--- END OF PLAN ---
 
 Conventions to check against:
 - Naming: ${conventions.namingStyle}

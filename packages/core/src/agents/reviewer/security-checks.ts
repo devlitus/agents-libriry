@@ -5,6 +5,30 @@ export interface FileContent {
   content: string;
 }
 
+/** Patterns that match hardcoded credentials in source code */
+const CREDENTIAL_PATTERNS = [
+  /\bpassword\s*=\s*['"][^'"]+['"]/,
+  /\bapi_key\s*=\s*['"][^'"]+['"]/,
+  /\bsecret\s*=\s*['"][^'"]+['"]/,
+  /\bapiKey\s*=\s*['"][^'"]+['"]/,
+] as const;
+
+/** Patterns that match potential SQL injection via string concatenation */
+const SQL_INJECTION_PATTERNS = [
+  /SELECT.*FROM.*WHERE.*=.*\+/,
+  /INSERT.*INTO.*VALUES.*\+/,
+  /UPDATE.*SET.*=.*\+/,
+  /DELETE.*FROM.*WHERE.*=.*\+/,
+] as const;
+
+/** Patterns that match dangerous dynamic code execution */
+const CODE_EXEC_PATTERNS = [/\beval\s*\(/, /\bexec\s*\(/] as const;
+
+/**
+ * Runs security checks on the provided files and returns a list of observations.
+ * Checks for: hardcoded credentials, SQL injection patterns, eval/exec usage,
+ * dangerouslySetInnerHTML, and direct innerHTML manipulation.
+ */
 export function runSecurityChecks(files: FileContent[]): ReviewObservation[] {
   const observations: ReviewObservation[] = [];
 
@@ -15,12 +39,8 @@ export function runSecurityChecks(files: FileContent[]): ReviewObservation[] {
       const line = lines[i];
       const lineNumber = i + 1;
 
-      if (
-        line.match(/\bpassword\s*=\s*['"][^'"]+['"]/) ||
-        line.match(/\bapi_key\s*=\s*['"][^'"]+['"]/) ||
-        line.match(/\bsecret\s*=\s*['"][^'"]+['"]/) ||
-        line.match(/\bapiKey\s*=\s*['"][^'"]+['"]/)
-      ) {
+      // Check for hardcoded credentials
+      if (CREDENTIAL_PATTERNS.some((p) => p.test(line))) {
         observations.push({
           severity: "error",
           file: file.path,
@@ -30,12 +50,8 @@ export function runSecurityChecks(files: FileContent[]): ReviewObservation[] {
         });
       }
 
-      if (
-        line.match(/SELECT.*FROM.*WHERE.*=.*\+/) ||
-        line.match(/INSERT.*INTO.*VALUES.*\+/) ||
-        line.match(/UPDATE.*SET.*=.*\+/) ||
-        line.match(/DELETE.*FROM.*WHERE.*=.*\+/)
-      ) {
+      // Check for SQL injection via string concatenation
+      if (SQL_INJECTION_PATTERNS.some((p) => p.test(line))) {
         observations.push({
           severity: "error",
           file: file.path,
@@ -45,7 +61,8 @@ export function runSecurityChecks(files: FileContent[]): ReviewObservation[] {
         });
       }
 
-      if (line.match(/\beval\s*\(/) || line.match(/\bexec\s*\(/)) {
+      // Check for eval/exec usage
+      if (CODE_EXEC_PATTERNS.some((p) => p.test(line))) {
         observations.push({
           severity: "error",
           file: file.path,

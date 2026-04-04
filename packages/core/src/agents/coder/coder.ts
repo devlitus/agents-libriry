@@ -2,21 +2,30 @@ import { buildCoderPrompt } from "../prompts.js";
 import { parseCoderResponse } from "../response-parser.js";
 import { generateDiff } from "./diff-generator.js";
 import { detectDependencies } from "./dependency-detector.js";
+import { NoOpConfirmationHandler } from "../../orchestrator/confirmation.js";
 import type { Agent, AgentContext, AgentExecutionResult, AgentName } from "../types.js";
 import type { ConfirmationHandler } from "../orchestrator-types.js";
 import type { ArchitectPlan } from "../architect/types.js";
 import type { CoderOutput } from "./types.js";
 
-// A dummy/noop handler in case none is provided
-class NoOpConfirmationHandler implements ConfirmationHandler {
-  async confirmPlan(): Promise<"yes" | "no" | "edit"> { return "yes"; }
-  async confirmFileWrite(): Promise<"yes" | "no" | "edit"> { return "yes"; }
-  async confirmCommand(): Promise<"yes" | "no" | "edit"> { return "yes"; }
-}
-
 export interface CoderAgentOptions {
   confirmation?: ConfirmationHandler;
 }
+
+/**
+ * Validates npm package name format per npm naming conventions.
+ * Matches: @scope/name or name (lowercase alphanumeric, hyphens, underscores, dots)
+ */
+const PACKAGE_NAME_REGEX = /^(?:@[a-z0-9](?:[a-z0-9._-]*[a-z0-9])?\/)?[a-z0-9](?:[a-z0-9._-]*[a-z0-9])?$/i;
+
+/**
+ * Flags and shell operators that are not allowed in install commands.
+ * Prevents injection attacks and dangerous installations.
+ */
+const DANGEROUS_INSTALL_FLAGS = [
+  "--global", "-g", "--unsafe-perm", "--install-links",
+  "&&", "||", "|", ";", "$", "`", ">>", ">", "<",
+];
 
 export class CoderAgent implements Agent {
   readonly name: AgentName = "coder";
@@ -96,7 +105,21 @@ export class CoderAgent implements Agent {
 
     // 6. Propose npm install if needed
     for (const dep of finalDependencies) {
+      // Validate package name format first
+      if (!PACKAGE_NAME_REGEX.test(dep)) {
+        messages.push(`Skipped invalid package name: ${dep}`);
+        continue;
+      }
+
+      // Validate dangerous flags against raw dep BEFORE constructing command
+      if (DANGEROUS_INSTALL_FLAGS.some((f) => dep.includes(f))) {
+        messages.push(`Skipped dangerous install pattern: ${dep}`);
+        continue;
+      }
+
+      // NOW construct the command (it's safe to do so)
       const command = `npm install ${dep}`;
+
       const conf = await this.confirmation.confirmCommand(command);
       if (conf === "yes") {
         try {

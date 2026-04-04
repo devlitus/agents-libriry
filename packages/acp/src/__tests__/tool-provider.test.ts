@@ -68,7 +68,7 @@ describe("AcpToolProvider", () => {
         sessionId: "test-session",
       });
 
-      const result = provider.listDirectory("/");
+      const result = provider.listDirectory(".");
       expect(result).toBeInstanceOf(Promise);
     });
   });
@@ -80,7 +80,7 @@ describe("AcpToolProvider", () => {
         sessionId: "test-session",
       });
 
-      const result = await provider.runCommand("echo hello");
+      const result = await provider.runCommand("ls .");
       expect(result).toHaveProperty("exitCode");
       expect(result).toHaveProperty("stdout");
       expect(result).toHaveProperty("stderr");

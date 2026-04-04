@@ -2,17 +2,10 @@
 description: Applies targeted refactors to existing code based on reviewer findings (warnings and smells). Never changes logic, never touches test files. Requires tests green before and after every change.
 mode: subagent
 temperature: 0.1
-tools:
-  read: true
-  write: true
-  edit: true
-  bash: true
-  skill: true
 permission:
-  read: allow
-  write: allow
   edit: allow
   bash:
+    "*": deny
     "pnpm test *": allow
     "pnpm tsc *": allow
 ---

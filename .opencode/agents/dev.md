@@ -2,19 +2,19 @@
 description: Primary TDD orchestrator. Runs architect → tester (red) → coder (green+refactor) → reviewer. Use this agent for any coding task in the monorepo.
 mode: primary
 temperature: 0.2
-tools:
-  read: true
-  write: true
-  edit: true
-  bash: true
-  task: true
-  skill: true
 permission:
   edit: ask
   bash:
+    "*": ask
     "pnpm *": allow
     "tsc *": allow
     "rm *": ask
+  task:
+    "architect": allow
+    "tester": allow
+    "coder": allow
+    "reviewer": allow
+    "refactor": allow
 ---
 
 You are the primary Dev orchestrator for the @devagents monorepo.

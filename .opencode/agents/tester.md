@@ -2,16 +2,9 @@
 description: TDD phase 1 — writes failing tests (red) from architect contracts before implementation exists. Never writes implementation files.
 mode: subagent
 temperature: 0.1
-tools:
-  read: true
-  write: true
-  edit: true
-  bash: false
-  skill: true
 permission:
-  read: allow
-  write: allow
   edit: allow
+  bash: deny
 ---
 
 You are the Tester for the @devagents TypeScript monorepo — TDD red phase.

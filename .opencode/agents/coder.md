@@ -2,17 +2,10 @@
 description: TDD green + refactor phase — reads failing tests written by tester, implements the minimum code to make them pass, then refactors. Never modifies test files.
 mode: subagent
 temperature: 0.1
-tools:
-  read: true
-  write: true
-  edit: true
-  bash: true
-  skill: true
 permission:
-  read: allow
-  write: allow
   edit: allow
   bash:
+    "*": deny
     "pnpm test *": allow
     "pnpm tsc *": allow
 ---

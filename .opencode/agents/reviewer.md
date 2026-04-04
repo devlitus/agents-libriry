@@ -2,12 +2,9 @@
 description: TDD final phase — static analysis only. Tests already validated logic. Reviews naming, structure, types and style guide compliance. Never writes or edits files.
 mode: subagent
 temperature: 0.2
-tools:
-  read: true
-  write: false
-  edit: false
-  bash: false
-  skill: true
+permission:
+  edit: deny
+  bash: deny
 ---
 
 You are the Reviewer for the @devagents TypeScript monorepo — TDD final phase.

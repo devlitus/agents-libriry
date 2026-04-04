@@ -12,6 +12,9 @@ import type { MemoryService } from "../memory/types.js";
 import type { ToolProvider } from "../agents/tool-provider.js";
 import type { DevAgentsConfig } from "../types.js";
 import type { Indexer } from "../indexer/indexer.js";
+import { createLogger } from "../logger.js";
+
+const logger = createLogger("orchestrator");
 
 export interface OrchestratorOptions {
   config: DevAgentsConfig;
@@ -49,103 +52,117 @@ export class Orchestrator {
 
   async *run(prompt: string): AsyncGenerator<OrchestratorEvent, void, unknown> {
     const sessionId = crypto.randomUUID();
+    logger.info("Starting orchestration session", { sessionId });
 
-    yield { type: "indexing_start" };
-    const projectIndex = await this.indexer.index();
-    yield { type: "indexing_complete" };
+    try {
+      yield { type: "indexing_start" };
+      logger.debug("Indexing project");
+      const projectIndex = await this.indexer.index();
+      logger.info("Project indexed", { language: projectIndex.language, framework: projectIndex.framework });
+      yield { type: "indexing_complete" };
 
-    const command = parseCommand(prompt);
-    const actualPrompt = command.type === "free" ? prompt : ('prompt' in command && typeof command.prompt === 'string' ? command.prompt : "");
-    
-    const context = this.createContext(sessionId, actualPrompt, projectIndex);
+      const command = parseCommand(prompt);
+      const actualPrompt = command.type === "free" ? prompt : ('prompt' in command && typeof command.prompt === 'string' ? command.prompt : "");
+      logger.debug("Parsed command", { type: command.type });
+      
+      const context = this.createContext(sessionId, actualPrompt, projectIndex);
 
-    if (command.type === "plan") {
-      const selection = selectAgentsForPrompt(actualPrompt, context);
-      const plan = generatePlan(actualPrompt, projectIndex, selection.agents);
+      if (command.type === "plan") {
+        const selection = selectAgentsForPrompt(actualPrompt, context);
+        const plan = generatePlan(actualPrompt, projectIndex, selection.agents);
+        yield { type: "plan_ready", plan };
+        return;
+      }
+
+      let agentsToRun: AgentName[];
+      if (command.type === "free") {
+        const selection = selectAgentsForPrompt(actualPrompt, context);
+        agentsToRun = selection.agents;
+      } else {
+        // It's a specific agent command like /architect, /coder, etc.
+        agentsToRun = [command.type as AgentName];
+      }
+
+      const plan = generatePlan(actualPrompt, projectIndex, agentsToRun);
       yield { type: "plan_ready", plan };
-      return;
-    }
 
-    let agentsToRun: AgentName[];
-    if (command.type === "free") {
-      const selection = selectAgentsForPrompt(actualPrompt, context);
-      agentsToRun = selection.agents;
-    } else {
-      // It's a specific agent command like /architect, /coder, etc.
-      agentsToRun = [command.type as AgentName];
-    }
+      const confirmed = await this.confirmation.confirmPlan(plan);
+      if (confirmed !== "yes") {
+        yield { type: "plan_rejected" };
+        yield { type: "session_complete", success: false };
+        return;
+      }
 
-    const plan = generatePlan(actualPrompt, projectIndex, agentsToRun);
-    yield { type: "plan_ready", plan };
+      yield { type: "plan_confirmed" };
 
-    const confirmed = await this.confirmation.confirmPlan(plan);
-    if (confirmed !== "yes") {
-      yield { type: "plan_rejected" };
+      let sessionSuccess = true;
+
+      for (let i = 0; i < agentsToRun.length; i++) {
+        const agentName = agentsToRun[i];
+        const agent = this.agents.get(agentName);
+        if (!agent) continue;
+
+        logger.info(`Starting agent: ${agentName}`);
+        yield { type: "agent_start", agent: agentName };
+        
+        const result = await agent.execute(context);
+        logger.info(`Agent ${agentName} completed`, { success: result.success });
+        context.previousResults.set(agentName, result);
+        
+        for (const msg of result.messages) {
+          yield { type: "agent_progress", agent: agentName, message: msg };
+        }
+        
+        yield { type: "agent_complete", agent: agentName, result };
+
+        if (!result.success) {
+          sessionSuccess = false;
+          logger.warn(`Agent ${agentName} failed, stopping session`);
+          break; // Stop execution if an agent fails
+        }
+
+        if (agentName === "reviewer") {
+          const reviewerOutput = result.data as ReviewerOutput | null;
+          if (!reviewerOutput || reviewerOutput.overallAssessment === "pass" || !reviewerOutput.observations?.length) {
+            continue;
+          }
+
+          const formattedObs = reviewerOutput.observations
+            .map((obs: ReviewObservation) => {
+              const location = obs.line ? `${obs.file}:${obs.line}` : obs.file;
+              const suggestion = obs.suggestion ?? "no suggestion";
+              return `${location}: ${obs.message} (${suggestion})`;
+            })
+            .join("\n");
+
+          context.prompt += `\n\nPlease fix the following review observations:\n${formattedObs}`;
+
+          const confirmed = await this.confirmation.confirmPlan({
+            summary: "Reviewer found issues. Apply fixes?",
+            language: projectIndex.language,
+            contextFiles: [],
+            steps: [
+              { agent: "coder", action: "Apply reviewer fixes" },
+              { agent: "reviewer", action: "Re-review fixes" },
+            ],
+          });
+
+          if (confirmed === "yes") {
+            agentsToRun.push("coder", "reviewer");
+            logger.info("Applying reviewer fixes, restarting Coder");
+            yield { type: "agent_progress", agent: "orchestrator", message: "Restarting Coder to apply Reviewer fixes." };
+          }
+        }
+      }
+
+      await this.saveSession(sessionId, prompt, agentsToRun, [], []);
+
+      logger.info("Session complete", { sessionSuccess });
+      yield { type: "session_complete", success: sessionSuccess };
+    } catch (err) {
+      logger.error("Orchestration error", { error: err instanceof Error ? err.message : String(err) });
       yield { type: "session_complete", success: false };
-      return;
     }
-
-    yield { type: "plan_confirmed" };
-
-    let sessionSuccess = true;
-
-    for (let i = 0; i < agentsToRun.length; i++) {
-      const agentName = agentsToRun[i];
-      const agent = this.agents.get(agentName);
-      if (!agent) continue;
-
-      yield { type: "agent_start", agent: agentName };
-      
-      const result = await agent.execute(context);
-      context.previousResults.set(agentName, result);
-      
-      for (const msg of result.messages) {
-        yield { type: "agent_progress", agent: agentName, message: msg };
-      }
-      
-      yield { type: "agent_complete", agent: agentName, result };
-
-      if (!result.success) {
-        sessionSuccess = false;
-        break; // Stop execution if an agent fails
-      }
-
-      if (agentName === "reviewer") {
-        const reviewerOutput = result.data as ReviewerOutput | null;
-        if (!reviewerOutput || reviewerOutput.overallAssessment === "pass" || !reviewerOutput.observations?.length) {
-          continue;
-        }
-
-        const formattedObs = reviewerOutput.observations
-          .map((obs: ReviewObservation) => {
-            const location = obs.line ? `${obs.file}:${obs.line}` : obs.file;
-            const suggestion = obs.suggestion ?? "no suggestion";
-            return `${location}: ${obs.message} (${suggestion})`;
-          })
-          .join("\n");
-
-        context.prompt += `\n\nPlease fix the following review observations:\n${formattedObs}`;
-
-        const confirmed = await this.confirmation.confirmPlan({
-          summary: "Reviewer found issues. Apply fixes?",
-          language: projectIndex.language,
-          contextFiles: [],
-          steps: [
-            { agent: "coder", action: "Apply reviewer fixes" },
-            { agent: "reviewer", action: "Re-review fixes" },
-          ],
-        });
-
-        if (confirmed === "yes") {
-          agentsToRun.push("coder", "reviewer");
-          yield { type: "agent_progress", agent: "orchestrator", message: "Restarting Coder to apply Reviewer fixes." };
-        }
-      }
-    }
-
-    await this.saveSession(sessionId, prompt, agentsToRun, [], []);
-
-    yield { type: "session_complete", success: sessionSuccess };
   }
 
   private createContext(sessionId: string, prompt: string, projectIndex: Awaited<ReturnType<Indexer["index"]>>): AgentContext {

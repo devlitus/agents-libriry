@@ -1,5 +1,7 @@
 import type { LlmClient, CompletionOptions } from "./types.js";
 
+const DEFAULT_MODEL = "claude-sonnet-4-5";
+
 /**
  * Error thrown when Anthropic API key is missing or request fails
  */
@@ -24,10 +26,14 @@ export class AnthropicClient implements LlmClient {
 
   constructor(options: { apiKey?: string; model?: string } = {}) {
     this.apiKey = options.apiKey ?? process.env.ANTHROPIC_API_KEY ?? "";
-    this.model = options.model ?? "claude-sonnet-4-5";
+    this.model = options.model ?? DEFAULT_MODEL;
 
     if (!this.apiKey) {
       throw new AnthropicError("ANTHROPIC_API_KEY environment variable is not set");
+    }
+
+    if (!this.apiKey.startsWith("sk-ant-")) {
+      throw new AnthropicError("Invalid ANTHROPIC_API_KEY format: must start with 'sk-ant-'");
     }
   }
 

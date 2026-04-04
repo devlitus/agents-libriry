@@ -1,5 +1,7 @@
 import type { LlmClient, CompletionOptions } from "./types.js";
 
+const DEFAULT_MODEL = "gpt-4o";
+
 /**
  * Error thrown when OpenAI API key is missing or request fails
  */
@@ -24,10 +26,14 @@ export class OpenAIClient implements LlmClient {
 
   constructor(options: { apiKey?: string; model?: string } = {}) {
     this.apiKey = options.apiKey ?? process.env.OPENAI_API_KEY ?? "";
-    this.model = options.model ?? "gpt-4o";
+    this.model = options.model ?? DEFAULT_MODEL;
 
     if (!this.apiKey) {
       throw new OpenAIError("OPENAI_API_KEY environment variable is not set");
+    }
+
+    if (!this.apiKey.startsWith("sk-")) {
+      throw new OpenAIError("Invalid OPENAI_API_KEY format: must start with 'sk-'");
     }
   }
 

@@ -1,6 +1,9 @@
 import type { LlmClient, CompletionOptions } from "./types.js";
 import { Ollama } from "ollama";
 
+const DEFAULT_OLLAMA_URL = "http://localhost:11434";
+const DEFAULT_MODEL = "llama3.1";
+
 export class OllamaError extends Error {
   name = "OllamaError";
   cause?: unknown;
@@ -17,8 +20,8 @@ export class OllamaClient implements LlmClient {
   private client: Ollama;
 
   constructor(options: { url?: string; model?: string } = {}) {
-    this.url = options.url ?? "http://localhost:11434";
-    this.model = options.model ?? "llama3.1";
+    this.url = options.url ?? DEFAULT_OLLAMA_URL;
+    this.model = options.model ?? DEFAULT_MODEL;
     this.client = new Ollama({ address: this.url });
   }
 

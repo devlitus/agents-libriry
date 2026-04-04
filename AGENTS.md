@@ -78,6 +78,52 @@ User prompt → Orchestrator → Architect → Coder → Tester → Reviewer
               SQLite memory (project_index, agent_memory, session_history)
 ```
 
+## OPENCODE IDE AGENTS (`.opencode/agents/`)
+
+Agentes configurados en OpenCode para el flujo de desarrollo diario. Se invocan con `@nombre` o cambiando con Tab.
+
+### Agentes primarios
+
+| Agente | Archivo | Descripción |
+|--------|---------|-------------|
+| **dev** | `dev.md` | Orquestador TDD principal. Ejecuta el pipeline completo: architect → tester → coder → reviewer. Punto de entrada para cualquier tarea de código. |
+
+### Subagentes de desarrollo (pipeline TDD)
+
+| Agente | Archivo | Descripción |
+|--------|---------|-------------|
+| **architect** | `architect.md` | Planifica estructura de archivos, tipos TypeScript, firmas de API pública y contratos de test antes de escribir código. Solo lectura. |
+| **tester** | `tester.md` | Fase TDD rojo — escribe tests que fallan a partir de los contratos del architect. Nunca escribe archivos de implementación. |
+| **coder** | `coder.md` | Fase TDD verde + refactor — lee los tests fallidos y escribe la implementación mínima para que pasen, luego refactoriza. Nunca modifica tests. |
+| **reviewer** | `reviewer.md` | Fase TDD final — análisis estático: naming, estructura, tipos y cumplimiento del style guide. Los tests ya validaron la lógica. |
+| **refactor** | `refactor.md` | Aplica refactors concretos basados en hallazgos del reviewer. No cambia lógica ni toca tests. Requiere tests en verde antes y después. |
+
+### Subagentes de calidad y seguridad
+
+| Agente | Archivo | Modo | Descripción |
+|--------|---------|------|-------------|
+| **quality** | `quality.md` | `all` | Experto en calidad de código. Audita y aplica principios SOLID, patrones de diseño GoF y Clean Code. Puede delegar fixes a `@coder` y `@refactor`. |
+| **security** | `security.md` | `subagent` | Experto en seguridad de aplicaciones. Audita vulnerabilidades OWASP (injection, secrets expuestos, dependencias con CVE, criptografía débil). Aplica fixes solo con confirmación explícita del usuario. |
+
+### Cómo usar los agentes de calidad y seguridad
+
+```bash
+# Auditoría de calidad de código (solo análisis)
+@quality audit packages/core/src/llm/
+
+# Calidad + aplicar correcciones automáticas
+@quality fix packages/core/src/agents/
+
+# Auditoría de seguridad completa del proyecto
+@security audit
+
+# Auditoría de seguridad de un módulo concreto
+@security audit packages/core/src/tools/
+
+# Aplicar un fix de seguridad específico
+@security fix packages/core/src/llm/client.ts
+```
+
 ## CODE STYLE (planned)
 
 - TypeScript strict mode (`"strict": true`)
@@ -98,6 +144,7 @@ User prompt → Orchestrator → Architect → Coder → Tester → Reviewer
 
 ## ANTI-PATTERNS (THIS PROJECT)
 
+- **NO third-party library analysis** — Never analyze, audit, recommend changes, or write code for third-party npm packages or dependencies. Security audits are only for `@devagents` own code. Reading third-party source code for research purposes is permitted, but writing or modifying it is strictly forbidden.
 - NO agent-to-agent networking (single process)
 - NO persistent LLM context across sessions (SQLite memory is structured cache)
 - NO plugin system in v1

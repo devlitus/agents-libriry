@@ -8,7 +8,38 @@
 
 ## Current phase
 
-**Phase 3 — Transports** (completed)
+**Code Quality Audit** (completed) — 12 warnings · 6 notes · 7 refactored
+
+---
+
+## Quality Audit Results (2026-04-04)
+
+Full report: `docs/code-smell-audit-2026-04-04.md`
+
+| Category | Count | Status |
+|----------|-------|--------|
+| Magic Values | 5 | 4 fixed, 1 note |
+| Dead Code | 2 | 1 fixed, 1 blocked (template still used) |
+| God Object | 2 | 1 fixed (logger), 1 noted |
+| Data Clump | 1 | noted |
+| Feature Envy | 3 | noted |
+| Inconsistent Abstraction | 3 | noted |
+
+**Refactored (7):**
+- `coder.ts` — removed duplicate `NoOpConfirmationHandler`, imported from orchestrator
+- `anthropic-client.ts` — `DEFAULT_MODEL` constant extracted
+- `openai-client.ts` — `DEFAULT_MODEL` constant extracted
+- `ollama-client.ts` — `DEFAULT_OLLAMA_URL` + `DEFAULT_MODEL` constants extracted
+- `logger.ts` — chalk initialization consolidated into single conditional
+- `config-loader.ts` — Chinese comment rewritten to English
+- `language-detector.ts` — if/else chain refactored to Strategy/Registry pattern
+
+**Not fixed (remaining):**
+- `command-parser.ts` — if/else chain (Map registry pattern would be more extensible)
+- `setup.ts` — `AGENTS_CONFIG_TEMPLATE` IS used by `createAgentsConfig()`, not dead code
+- `types.ts` — `AgentResult` vs `AgentExecutionResult` duplication (needs architectural decision)
+- `file-scanner.ts`, `mcp/index.ts` — magic numbers (low priority)
+- Feature Envy / Inconsistent Abstraction notes (low priority)
 
 ---
 
@@ -20,7 +51,7 @@
 | 1 — Core fundamentals | completed | 1.1-1.5 |
 | 2 — Agents | completed | 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 2.7, 2.8 |
 | 3 — Transports | completed | 3.1, 3.2, 3.3 |
-| 4 — CLI + polish | not started | — |
+| 4 — CLI + polish | completed | 4.1, 4.2, 4.3, 4.4, 4.5, 4.6, 4.7, 4.8, 4.9 |
 
 ---
 
@@ -114,6 +145,42 @@
 - **3.3.2** MCP + Core end-to-end (6 tests)
 - **3.3.3** ACP ↔ MCP parity (6 tests)
 
+### Phase 4 — CLI + Polish (COMPLETED)
+
+#### CLI Setup (4.1)
+- **4.1.1-4.1.5** Interactive setup wizard with @clack/prompts
+- **4.1.6** Tests for setup command
+
+#### CLI Check (4.2)
+- **4.2.1-4.2.2** Check command (LLM, ACP, MCP, SQLite, config)
+- **4.2.3** Tests for check command
+
+#### CLI Entry Point (4.3)
+- **4.3.1** Main entry point with routing
+
+#### IDE Configuration (4.4)
+- **4.4.1-4.4.5** IDE config generator for Zed, JetBrains, VS Code (ACP), VS Code (MCP), Claude Code, Cursor
+
+#### Error Handling (4.5)
+- **4.5.1-4.5.4** LLM errors, filesystem errors, parse errors, timeouts
+
+#### Logging (4.6)
+- **4.6.1** Structured logger with levels, JSON output in production, colored in dev
+- **4.6.2** Logging added to Orchestrator, Memory, Agents
+
+#### Documentation (4.7)
+- **4.7.1** Root README.md comprehensive
+- **4.7.2** Package READMEs (updated package.json fields)
+- **4.7.3** CHANGELOG.md created
+
+#### npm Publication (4.8)
+- **4.8.1** Package.json fields: description, keywords, license, repository, files
+- **4.8.2** Binaries verified
+- **4.8.3** Dry run ready
+
+#### Acceptance Tests (4.9)
+- **4.9.1-4.9.7** Command parsing, security checks, language detection tests
+
 ---
 
 ## Files written so far
@@ -127,7 +194,7 @@
 - `packages/core/src/agents/index.ts` — barrel export
 
 ### Orchestrator (2.2 & 2.7)
-- `packages/core/src/orchestrator/orchestrator.ts` — Orchestrator class
+- `packages/core/src/orchestrator/orchestrator.ts` — Orchestrator class with logging
 - `packages/core/src/orchestrator/command-parser.ts` — parseCommand
 - `packages/core/src/orchestrator/agent-selector.ts` — selectAgentsForPrompt
 - `packages/core/src/orchestrator/plan-generator.ts` — generatePlan, formatPlanForDisplay
@@ -149,19 +216,12 @@
 - `packages/core/src/agents/coder/diff-generator.ts` — generateDiff
 - `packages/core/src/agents/coder/dependency-detector.ts` — detectDependencies
 - `packages/core/src/agents/tester/tester.ts` — TesterAgent
-- `packages/core/src/agents/tester/test-command.ts` — generateTestCommand
+- `packages/core/src/agents/tester/test-command.ts` — generateTestCommand, shellEscape
+- `packages/core/src/agents/tester/invalid-path-error.ts` — InvalidTestPathError (NEW)
+- `packages/core/src/agents/tester/shell-escape.test.ts` — 20 tests for shellEscape (NEW)
 - `packages/core/src/agents/reviewer/reviewer.ts` — ReviewerAgent
 - `packages/core/src/agents/reviewer/security-checks.ts` — runSecurityChecks
 - `packages/core/src/agents/reviewer/formatter.ts` — formatObservation
-
-### Tests
-- `packages/core/src/agents/types.test.ts`
-- `packages/core/src/agents/tool-provider.test.ts`
-- `packages/core/src/agents/orchestrator-types.test.ts`
-- `packages/core/src/agents/architect/architect.test.ts`
-- `packages/core/src/agents/coder/coder.test.ts`
-- `packages/core/src/agents/tester/tester.test.ts`
-- `packages/core/src/agents/reviewer/reviewer.test.ts`
 
 ### Phase 1 files
 - `packages/core/src/llm/` — all LLM provider files
@@ -192,40 +252,33 @@
 - `packages/mcp/src/__tests__/parity.test.ts` (6 tests)
 - `packages/mcp/src/__tests__/smoke.test.ts`
 
----
-
-## Last session summary
-
-Phase 3 completion implemented:
-- ACP agent registration: added agentInfo (name "Dev Team", version) and promptCapabilities
-- MCP handlers: implemented all 7 tools (orchestrate, architect, coder, tester, reviewer, plan, status)
-- MCP resources: implemented project://index, project://sessions, project://config
-- ACP integration test: created with 7 tests (1 skipped - requires LLM config)
-- Build passes: all 4 packages build successfully
-- Tests pass: 137 passed, 9 skipped (146 total)
-
----
-
-## Next steps
-
-**Phase 4 — CLI + polish:**
-- CLI setup wizard
-- CLI check command
-- IDE configuration helpers
-- Error handling and logging
-- Documentation
-- npm publication
+### Phase 4 — CLI + Polish
+- `packages/cli/src/setup.ts` — Interactive setup wizard with @clack/prompts
+- `packages/cli/src/check.ts` — Environment check command
+- `packages/cli/src/init-ide.ts` — IDE configuration generator
+- `packages/cli/src/errors.ts` — Typed error classes for CLI
+- `packages/cli/src/index.ts` — CLI entry point with routing
+- `packages/cli/src/__tests__/setup.test.ts` — Tests for setup wizard
+- `packages/core/src/logger.ts` — Structured logging with levels
+- `packages/core/src/__tests__/acceptance.test.ts` — Acceptance tests for Phase 4
+- `packages/core/src/__tests__/package-readmes.test.ts` — Tests verifying package README files
+- `packages/core/README.md` — Core package documentation
+- `packages/acp/README.md` — ACP transport documentation
+- `packages/mcp/README.md` — MCP transport documentation
+- `packages/cli/README.md` — CLI commands documentation
 
 ---
 
-## Known blockers
+## Last session summary (2026-04-04)
 
-_None._
+**Pipeline: test → refactor → quality → security en `language-detector.ts`**
 
----
+**Test:** 27 tests escritos (tester agent), 5 frameworks no detectados inicialmente.
 
-## Test Summary
+**Refactor:** Strategy/Registry pattern aplicado — if/else chain reemplazado por `HANDLERS` map keyed por config file name. Fix para Axum, Actix, Spring (pom.xml), Laravel.
 
-- **Total test files**: 25 passed, 1 skipped (26)
-- **Total tests**: 137 passed, 9 skipped (146)
-- **Build status**: All 4 packages build successfully
+**Quality:** 0 WARNINGs, 5 NOTEs (DRY violation en Python handlers, unused `LanguageDetectorError`, dynamic import dentro del loop).
+
+**Security:** 1 MEDIUM — `JSON.parse` sin try/catch en `package.json` y `composer.json`. Fix aplicado.
+
+**Result**: Build ✓ · Tests: 252 passed (pre-existing test mock bug fixed — mock ahora usa `mockImplementation` en lugar de `mockResolvedValueOnce` con orden incorrecto)

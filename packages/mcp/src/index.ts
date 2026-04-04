@@ -21,6 +21,56 @@ import { McpToolProvider } from "./tool-provider.js";
 import { McpConfirmationHandler } from "./confirmation-handler.js";
 import { formatResult } from "./result-formatter.js";
 
+/** Maximum prompt length in characters (100KB) */
+const MAX_PROMPT_LENGTH = 100_000;
+
+/** Maximum requests per client per minute */
+const MAX_REQUESTS_PER_MINUTE = 60;
+
+/** In-memory rate limit tracking: clientId → { count, resetAt } */
+const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
+
+/**
+ * Checks if a client is within their rate limit.
+ * Returns true if allowed, false if rate limited.
+ * Cleans up expired entries to prevent memory leak.
+ */
+function checkRateLimit(clientId: string): boolean {
+  const now = Date.now();
+
+  // Clean up expired entries to prevent memory leak
+  for (const [key, entry] of rateLimitMap) {
+    if (entry.resetAt < now) {
+      rateLimitMap.delete(key);
+    }
+  }
+
+  const entry = rateLimitMap.get(clientId);
+
+  if (!entry || entry.resetAt < now) {
+    // New or expired window — reset
+    rateLimitMap.set(clientId, { count: 1, resetAt: now + 60_000 });
+    return true;
+  }
+
+  if (entry.count >= MAX_REQUESTS_PER_MINUTE) {
+    return false; // Rate limited
+  }
+
+  entry.count++;
+  return true;
+}
+
+/**
+ * Validates that a prompt string is within the maximum allowed length.
+ * Throws an error if the prompt exceeds MAX_PROMPT_LENGTH.
+ */
+function validatePromptLength(prompt: string): void {
+  if (prompt.length > MAX_PROMPT_LENGTH) {
+    throw new Error(`Prompt exceeds maximum length of ${MAX_PROMPT_LENGTH} characters`);
+  }
+}
+
 interface Tool {
   name: string;
   description: string;
@@ -356,6 +406,14 @@ async function main() {
   });
 
   server.setRequestHandler(CallToolRequestSchema, async (request) => {
+    // Rate limit check (MCP stdio = single local client)
+    if (!checkRateLimit("mcp-client")) {
+      return {
+        content: [{ type: "text", text: "Rate limit exceeded. Try again later." }],
+        isError: true,
+      };
+    }
+
     const toolName = request.params.name;
     const args = request.params.arguments ?? {};
 
@@ -364,6 +422,15 @@ async function main() {
       if (!prompt) {
         return {
           content: [{ type: "text", text: "Missing prompt argument" }],
+          isError: true,
+        };
+      }
+
+      try {
+        validatePromptLength(prompt);
+      } catch (error) {
+        return {
+          content: [{ type: "text", text: `Error: ${error instanceof Error ? error.message : String(error)}` }],
           isError: true,
         };
       }
@@ -380,6 +447,16 @@ async function main() {
           isError: true,
         };
       }
+
+      try {
+        validatePromptLength(prompt);
+      } catch (error) {
+        return {
+          content: [{ type: "text", text: `Error: ${error instanceof Error ? error.message : String(error)}` }],
+          isError: true,
+        };
+      }
+
       const result = await runOrchestrator(`/architect ${prompt}`, orchestrator);
       return formatToolResult("architect", result);
     }
@@ -392,6 +469,16 @@ async function main() {
           isError: true,
         };
       }
+
+      try {
+        validatePromptLength(prompt);
+      } catch (error) {
+        return {
+          content: [{ type: "text", text: `Error: ${error instanceof Error ? error.message : String(error)}` }],
+          isError: true,
+        };
+      }
+
       const result = await runOrchestrator(`/coder ${prompt}`, orchestrator);
       return formatToolResult("coder", result);
     }
@@ -404,7 +491,36 @@ async function main() {
           isError: true,
         };
       }
+
+      try {
+        validatePromptLength(prompt);
+      } catch (error) {
+        return {
+          content: [{ type: "text", text: `Error: ${error instanceof Error ? error.message : String(error)}` }],
+          isError: true,
+        };
+      }
+
       const file = args.file as string | undefined;
+
+      // Validate file path to prevent path traversal
+      if (file !== undefined) {
+        if (file.includes("..") || file.startsWith("/")) {
+          return {
+            content: [{ type: "text", text: "Invalid file path: absolute paths and path traversal (..) are not allowed" }],
+            isError: true,
+          };
+        }
+
+        // Validate file path doesn't contain other dangerous patterns
+        if (/[<>:"|?*]/.test(file)) {
+          return {
+            content: [{ type: "text", text: "Invalid file path: contains illegal characters" }],
+            isError: true,
+          };
+        }
+      }
+
       const fullPrompt = file ? `/tester ${prompt} for file ${file}` : `/tester ${prompt}`;
       const result = await runOrchestrator(fullPrompt, orchestrator);
       return formatToolResult("tester", result);
@@ -418,6 +534,16 @@ async function main() {
           isError: true,
         };
       }
+
+      try {
+        validatePromptLength(prompt);
+      } catch (error) {
+        return {
+          content: [{ type: "text", text: `Error: ${error instanceof Error ? error.message : String(error)}` }],
+          isError: true,
+        };
+      }
+
       const result = await runOrchestrator(`/reviewer ${prompt}`, orchestrator);
       return formatToolResult("reviewer", result);
     }
@@ -430,6 +556,16 @@ async function main() {
           isError: true,
         };
       }
+
+      try {
+        validatePromptLength(prompt);
+      } catch (error) {
+        return {
+          content: [{ type: "text", text: `Error: ${error instanceof Error ? error.message : String(error)}` }],
+          isError: true,
+        };
+      }
+
       const result = await runOrchestrator(`/plan ${prompt}`, orchestrator);
       return formatToolResult("plan", result);
     }

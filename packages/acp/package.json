@@ -1,5 +1,5 @@
 {
-  "name": "@devagents/acp",
+  "name": "@devlitusp/acp",
   "version": "0.1.0",
   "description": "ACP transport for @devagents — Zed, JetBrains, VS Code",
   "keywords": ["ai", "agents", "acp", "zed", "jetbrains", "vscode"],
@@ -25,11 +25,14 @@
   "files": [
     "dist"
   ],
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build": "tsup"
   },
   "dependencies": {
-    "@devagents/core": "workspace:*",
+    "@devlitusp/core": "workspace:*",
     "@agentclientprotocol/sdk": "^0.18.0"
   }
 }

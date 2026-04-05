@@ -1,4 +1,4 @@
-import type { OrchestratorEvent, PlanDefinition } from "@devagents/core";
+import type { OrchestratorEvent, PlanDefinition } from "@devlitusp/core";
 
 export interface McpToolResult {
   content: Array<{

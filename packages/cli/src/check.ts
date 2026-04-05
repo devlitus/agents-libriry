@@ -1,14 +1,14 @@
 /**
  * Environment check command for @devagents
- * @devagents/cli
+ * @devlitusp/cli
  */
 
 import { existsSync, constants } from "node:fs";
 import { access, readFile } from "node:fs/promises";
 import { join } from "node:path";
-import { detectProvider, createClient } from "@devagents/core";
-import { loadConfig } from "@devagents/core";
-import type { LlmProvider } from "@devagents/core";
+import { detectProvider, createClient } from "@devlitusp/core";
+import { loadConfig } from "@devlitusp/core";
+import type { LlmProvider } from "@devlitusp/core";
 
 export interface CheckResult {
   name: string;

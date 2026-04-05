@@ -1,6 +1,6 @@
 /**
  * IDE configuration generator for @devagents
- * @devagents/cli
+ * @devlitusp/cli
  */
 
 import { intro, outro, select } from "@clack/prompts";

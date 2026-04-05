@@ -1,6 +1,6 @@
 /**
  * LLM module barrel export
- * @devagents/core
+ * @devlitusp/core
  */
 
 export type {

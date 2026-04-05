@@ -1,5 +1,5 @@
 {
-  "name": "@devagents/mcp",
+  "name": "@devlitusp/mcp",
   "version": "0.1.0",
   "description": "MCP transport for @devagents — Claude Code, Cursor, Copilot",
   "keywords": ["ai", "agents", "mcp", "claude", "cursor", "copilot"],
@@ -25,11 +25,14 @@
   "files": [
     "dist"
   ],
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build": "tsup"
   },
   "dependencies": {
-    "@devagents/core": "workspace:*",
+    "@devlitusp/core": "workspace:*",
     "@modelcontextprotocol/sdk": "^1.29.0"
   }
 }

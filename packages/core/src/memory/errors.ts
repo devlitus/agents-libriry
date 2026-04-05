@@ -1,6 +1,6 @@
 /**
  * Typed error classes for Memory service
- * @devagents/core
+ * @devlitusp/core
  */
 
 export class MemoryDatabaseError extends Error {

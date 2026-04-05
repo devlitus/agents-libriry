@@ -2,7 +2,7 @@ import * as acp from "@agentclientprotocol/sdk";
 import { execFile } from "node:child_process";
 import { readdir } from "node:fs/promises";
 import { isAbsolute, resolve } from "node:path";
-import type { ToolProvider, CommandResult } from "@devagents/core";
+import type { ToolProvider, CommandResult } from "@devlitusp/core";
 
 /**
  * Commands allowed to be executed via runCommand().

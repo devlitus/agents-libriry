@@ -1,5 +1,5 @@
 {
-  "name": "@devagents/core",
+  "name": "@devlitusp/core",
   "version": "0.1.0",
   "description": "Orchestrator, agents, indexer, and memory for @devagents",
   "keywords": ["ai", "agents", "coding", "orchestrator", "devtools"],
@@ -22,6 +22,9 @@
   "files": [
     "dist"
   ],
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build": "tsup && tsc --declaration --emitDeclarationOnly --outDir dist --rootDir src"
   },

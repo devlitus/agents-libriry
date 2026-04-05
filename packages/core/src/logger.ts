@@ -1,7 +1,7 @@
 /**
  * Structured logging for @devagents
  * Logs go to stderr to avoid contaminating stdout (used by ACP/MCP)
- * @devagents/core
+ * @devlitusp/core
  */
 
 export type LogLevel = "debug" | "info" | "warn" | "error";

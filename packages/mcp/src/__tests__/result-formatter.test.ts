@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { formatResult, formatEventAsText } from "../result-formatter.js";
-import type { OrchestratorEvent } from "@devagents/core";
+import type { OrchestratorEvent } from "@devlitusp/core";
 
 describe("result-formatter", () => {
   describe("formatEventAsText", () => {

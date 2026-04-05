@@ -1,4 +1,4 @@
-import type { ConfirmationHandler, PlanDefinition, UserConfirmation } from "@devagents/core";
+import type { ConfirmationHandler, PlanDefinition, UserConfirmation } from "@devlitusp/core";
 
 export class McpConfirmationHandler implements ConfirmationHandler {
   async confirmPlan(plan: PlanDefinition): Promise<UserConfirmation> {

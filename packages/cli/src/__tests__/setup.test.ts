@@ -1,6 +1,6 @@
 /**
  * Tests for setup wizard
- * @devagents/cli
+ * @devlitusp/cli
  */
 
 import { describe, it, expect, vi, beforeEach } from "vitest";

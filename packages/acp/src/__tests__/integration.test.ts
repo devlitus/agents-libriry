@@ -30,8 +30,8 @@ interface MockOrchestrator {
   run: ReturnType<typeof vi.fn>;
 }
 
-// Mock the @devagents/core module before importing the agent
-vi.mock("@devagents/core", async () => {
+// Mock the @devlitusp/core module before importing the agent
+vi.mock("@devlitusp/core", async () => {
   const mockLlm: MockLlm = {
     complete: vi.fn().mockResolvedValue("mocked response"),
     stream: vi.fn(),

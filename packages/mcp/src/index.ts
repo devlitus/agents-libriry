@@ -13,10 +13,10 @@ import {
   createMemoryService,
   createIndexer,
   loadConfig,
-} from "@devagents/core";
-import type { OrchestratorOptions } from "@devagents/core";
-import type { OrchestratorEvent } from "@devagents/core";
-import type { Indexer } from "@devagents/core";
+} from "@devlitusp/core";
+import type { OrchestratorOptions } from "@devlitusp/core";
+import type { OrchestratorEvent } from "@devlitusp/core";
+import type { Indexer } from "@devlitusp/core";
 import { McpToolProvider } from "./tool-provider.js";
 import { McpConfirmationHandler } from "./confirmation-handler.js";
 import { formatResult } from "./result-formatter.js";

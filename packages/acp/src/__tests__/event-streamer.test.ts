@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
 import type { AgentSideConnection } from "@agentclientprotocol/sdk";
 import { EventStreamer } from "../event-streamer.js";
-import type { OrchestratorEvent } from "@devagents/core";
+import type { OrchestratorEvent } from "@devlitusp/core";
 
 describe("EventStreamer", () => {
   const mockConnection = {

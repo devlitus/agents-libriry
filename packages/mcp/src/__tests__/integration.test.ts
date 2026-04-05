@@ -1,8 +1,8 @@
 import { describe, it, expect } from "vitest";
 import { McpConfirmationHandler } from "../confirmation-handler.js";
 import { formatResult, formatEventAsText } from "../result-formatter.js";
-import { Orchestrator } from "@devagents/core";
-import type { OrchestratorEvent, ToolProvider } from "@devagents/core";
+import { Orchestrator } from "@devlitusp/core";
+import type { OrchestratorEvent, ToolProvider } from "@devlitusp/core";
 
 class MockLlm {
   readonly provider = "mock";

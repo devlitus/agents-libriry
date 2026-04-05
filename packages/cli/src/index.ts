@@ -1,5 +1,5 @@
 /**
- * @devagents/cli
+ * @devlitusp/cli
  * CLI entry point
  */
 

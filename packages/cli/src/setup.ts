@@ -1,6 +1,6 @@
 /**
  * Interactive setup wizard for @devagents
- * @devagents/cli
+ * @devlitusp/cli
  */
 
 import { intro, outro, select, text, confirm } from "@clack/prompts";
@@ -37,7 +37,7 @@ const DOTENV_ANTHROPIC_TEMPLATE = `ANTHROPIC_API_KEY={API_KEY}
 const DOTENV_OPENAI_TEMPLATE = `OPENAI_API_KEY={API_KEY}
 `;
 
-const AGENTS_CONFIG_TEMPLATE = `import type { DevAgentsConfig } from "@devagents/core";
+const AGENTS_CONFIG_TEMPLATE = `import type { DevAgentsConfig } from "@devlitusp/core";
 
 const config: DevAgentsConfig = {
   llm: {

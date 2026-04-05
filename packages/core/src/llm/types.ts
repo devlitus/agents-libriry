@@ -1,6 +1,6 @@
 /**
- * LLM provider types and interfaces for @devagents/core
- * @devagents/core
+ * LLM provider types and interfaces for @devlitusp/core
+ * @devlitusp/core
  */
 
 export interface CompletionOptions {

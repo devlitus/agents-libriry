@@ -1,5 +1,5 @@
 import type { AgentSideConnection } from "@agentclientprotocol/sdk";
-import type { OrchestratorEvent } from "@devagents/core";
+import type { OrchestratorEvent } from "@devlitusp/core";
 
 export class EventStreamer {
   private readonly connection: AgentSideConnection;

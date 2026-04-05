@@ -1,6 +1,6 @@
 import { readFile, writeFile, readdir } from "node:fs/promises";
 import { resolve, relative } from "node:path";
-import type { ToolProvider, CommandResult } from "@devagents/core";
+import type { ToolProvider, CommandResult } from "@devlitusp/core";
 
 /**
  * Set of commands allowed to be executed via runCommand().

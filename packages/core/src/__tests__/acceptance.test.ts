@@ -1,6 +1,6 @@
 /**
  * Acceptance tests for Phase 4 - CLI and Integration
- * @devagents/core
+ * @devlitusp/core
  */
 
 import { describe, it, expect, beforeAll, afterAll } from "vitest";

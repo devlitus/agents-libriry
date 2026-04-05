@@ -1,6 +1,6 @@
 /**
  * Typed error classes for LLM providers
- * @devagents/core
+ * @devlitusp/core
  */
 
 export class LLMProviderNotAvailableError extends Error {

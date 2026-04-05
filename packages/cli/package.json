@@ -1,5 +1,5 @@
 {
-  "name": "@devagents/cli",
+  "name": "@devlitusp/cli",
   "version": "0.1.0",
   "description": "CLI for @devagents — setup and check commands",
   "keywords": ["ai", "agents", "cli", "setup", "devtools"],
@@ -25,11 +25,14 @@
   "files": [
     "dist"
   ],
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build": "tsup"
   },
   "dependencies": {
-    "@devagents/core": "workspace:*",
+    "@devlitusp/core": "workspace:*",
     "@clack/prompts": "^0.7.0"
   }
 }

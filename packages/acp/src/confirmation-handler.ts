@@ -3,7 +3,7 @@ import type {
   ConfirmationHandler,
   PlanDefinition,
   UserConfirmation,
-} from "@devagents/core";
+} from "@devlitusp/core";
 
 export interface AcpConfirmationHandlerDeps {
   connection: AgentSideConnection;

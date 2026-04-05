@@ -7,8 +7,8 @@ import {
   createMemoryService,
   createIndexer,
   loadConfig,
-} from "@devagents/core";
-import type { OrchestratorOptions } from "@devagents/core";
+} from "@devlitusp/core";
+import type { OrchestratorOptions } from "@devlitusp/core";
 import { AcpToolProvider, type AcpToolProviderDeps } from "./tool-provider.js";
 import { AcpConfirmationHandler, type AcpConfirmationHandlerDeps } from "./confirmation-handler.js";
 import { EventStreamer } from "./event-streamer.js";

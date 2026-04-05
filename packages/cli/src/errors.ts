@@ -1,6 +1,6 @@
 /**
  * Typed error classes for CLI
- * @devagents/cli
+ * @devlitusp/cli
  */
 
 export class CliSetupError extends Error {

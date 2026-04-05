@@ -1,6 +1,6 @@
 {
   "name": "@devlitusp/mcp",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "MCP transport for @devagents — Claude Code, Cursor, Copilot",
   "keywords": ["ai", "agents", "mcp", "claude", "cursor", "copilot"],
   "license": "MIT",

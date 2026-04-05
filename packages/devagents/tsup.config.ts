@@ -10,6 +10,9 @@ export default defineConfig({
   format: ['cjs', 'esm'],
   dts: false,
   clean: true,
+  // Bundle all @devlitusp/* workspace packages so the published artifact
+  // has no workspace: dependencies that npm/yarn cannot resolve.
+  noExternal: [/^@devlitusp\//],
   banner: {
     js: '#!/usr/bin/env node'
   }

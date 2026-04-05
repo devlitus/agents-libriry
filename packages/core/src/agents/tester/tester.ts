@@ -143,7 +143,8 @@ export class TesterAgent implements Agent {
 
   private async confirmAndRunCommand(context: AgentContext, testPath: string) {
     const fw = context.projectIndex.testFramework || "generic";
-    const cmd = generateTestCommand(fw, testPath);
+    const pm = context.projectIndex.packageManager ?? "npm";
+    const cmd = generateTestCommand(fw, testPath, pm);
     
     const confirm = await this.confirmation.confirmCommand(cmd);
     if (confirm === "yes") {

@@ -103,7 +103,13 @@ export class CoderAgent implements Agent {
       }
     }
 
-    // 6. Propose npm install if needed
+    // 6. Propose install if needed
+    const pm = context.projectIndex?.packageManager ?? "npm";
+    const installCmd = pm === "pnpm" ? "pnpm add"
+      : pm === "yarn" ? "yarn add"
+      : pm === "bun" ? "bun add"
+      : "npm install";
+
     for (const dep of finalDependencies) {
       // Validate package name format first
       if (!PACKAGE_NAME_REGEX.test(dep)) {
@@ -118,7 +124,7 @@ export class CoderAgent implements Agent {
       }
 
       // NOW construct the command (it's safe to do so)
-      const command = `npm install ${dep}`;
+      const command = `${installCmd} ${dep}`;
 
       const conf = await this.confirmation.confirmCommand(command);
       if (conf === "yes") {

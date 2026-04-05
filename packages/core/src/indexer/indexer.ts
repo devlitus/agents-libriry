@@ -8,6 +8,7 @@ import type {
   DetectedProject,
   FileTreeNode,
   KeyFileInfo,
+  PackageManager,
 } from "./types.js";
 
 export { FileScannerError } from "./file-scanner.js";
@@ -15,8 +16,18 @@ export { LanguageDetectorError, detectLanguage, findConfigFiles } from "./langua
 export { TestDetectorError, detectTestFramework } from "./test-detector.js";
 export { ConventionDetectorError, detectConventions } from "./convention-detector.js";
 
+function detectPackageManager(configFiles: string[]): PackageManager {
+  if (configFiles.includes("pnpm-lock.yaml")) return "pnpm";
+  if (configFiles.includes("yarn.lock")) return "yarn";
+  if (configFiles.includes("bun.lockb")) return "bun";
+  return "npm";
+}
+
 const KEY_FILES = [
   "package.json",
+  "pnpm-lock.yaml",
+  "yarn.lock",
+  "bun.lockb",
   "pyproject.toml",
   "requirements.txt",
   "Cargo.toml",
@@ -75,6 +86,7 @@ export class Indexer {
       language: languageDetection.language,
       framework: languageDetection.framework,
       testFramework: testDetection.framework,
+      packageManager: detectPackageManager(configFiles),
       conventions: {
         ...conventions,
         testFilePattern: testDetection.testFilePattern,

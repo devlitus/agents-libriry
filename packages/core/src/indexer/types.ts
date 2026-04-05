@@ -24,10 +24,13 @@ export interface FileTreeNode {
   children?: FileTreeNode[];
 }
 
+export type PackageManager = "npm" | "pnpm" | "yarn" | "bun";
+
 export interface DetectedProject {
   language: string;
   framework: string | null;
   testFramework: string | null;
+  packageManager: PackageManager;
   conventions: ProjectConventions;
   fileTree: FileTreeNode[];
   configFiles: string[];

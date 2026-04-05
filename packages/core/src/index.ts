@@ -71,6 +71,7 @@ export type {
   NamingStyle,
   ImportStyle,
   KeyFileInfo,
+  PackageManager,
 } from "./indexer/types.js";
 
 export {

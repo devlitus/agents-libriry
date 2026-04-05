@@ -62,11 +62,21 @@ export function validateTestPath(path: string): void {
 /**
  * Generates a framework-specific test command with properly escaped paths.
  */
-export function generateTestCommand(testFramework: string, testFilePath: string): string {
+export function generateTestCommand(
+  testFramework: string,
+  testFilePath: string,
+  packageManager: 'npm' | 'pnpm' | 'yarn' | 'bun' = 'npm'
+): string {
   const fw = testFramework.toLowerCase();
   const escapedPath = shellEscape(testFilePath);
 
   if (fw === 'jest') {
+    if (packageManager === 'pnpm') {
+      return `pnpm test -- --testPathPattern=${escapedPath}`;
+    }
+    if (packageManager === 'yarn') {
+      return `yarn test --testPathPattern=${escapedPath}`;
+    }
     return `npm test -- --testPathPattern=${escapedPath}`;
   }
 
@@ -86,5 +96,11 @@ export function generateTestCommand(testFramework: string, testFilePath: string)
     return `cargo test ${escapedPath}`;
   }
 
+  if (packageManager === 'pnpm') {
+    return `pnpm test -- ${escapedPath}`;
+  }
+  if (packageManager === 'yarn') {
+    return `yarn test ${escapedPath}`;
+  }
   return `npm test -- ${escapedPath}`;
 }

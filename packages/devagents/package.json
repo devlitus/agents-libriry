@@ -1,6 +1,6 @@
 {
   "name": "devagents",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "A team of AI coding agents — install once, use with MCP, ACP, or CLI",
   "keywords": ["ai", "agents", "coding", "mcp", "acp", "cli", "opencode", "devtools"],
   "license": "MIT",
@@ -31,9 +31,14 @@
     "build": "tsup"
   },
   "dependencies": {
-    "@devlitusp/core": "workspace:*",
-    "@devlitusp/cli": "workspace:*",
-    "@devlitusp/mcp": "workspace:*",
-    "@devlitusp/acp": "workspace:*"
+    "@anthropic-ai/sdk": "^0.82.0",
+    "@agentclientprotocol/sdk": "^0.18.0",
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "@clack/prompts": "^0.7.0",
+    "better-sqlite3": "^11.0.0",
+    "chalk": "^5.0.0",
+    "diff": "^5.0.0",
+    "ollama": "^0.1.0",
+    "openai": "^4.67.0"
   }
 }

@@ -223,7 +223,7 @@ async function getProjectIndex(indexer: Indexer) {
 }
 
 async function getSessionHistory(memory: Awaited<ReturnType<typeof createMemoryService>>) {
-  const sessions = await memory.getRecentSessions();
+  const sessions = await memory.getRecentSessions(10);
   return JSON.stringify(sessions, null, 2);
 }
 

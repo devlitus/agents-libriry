@@ -1,6 +1,7 @@
 import type { OrchestratorEvent, PlanDefinition } from "@devlitusp/core";
 
 export interface McpToolResult {
+  [key: string]: unknown;
   content: Array<{
     type: "text";
     text: string;

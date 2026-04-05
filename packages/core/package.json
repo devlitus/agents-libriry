@@ -1,6 +1,6 @@
 {
   "name": "@devlitusp/core",
-  "version": "0.1.0",
+  "version": "0.0.1",
   "description": "Orchestrator, agents, indexer, and memory for @devagents",
   "keywords": ["ai", "agents", "coding", "orchestrator", "devtools"],
   "license": "MIT",

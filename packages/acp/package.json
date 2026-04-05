@@ -1,6 +1,6 @@
 {
   "name": "@devlitusp/acp",
-  "version": "0.1.0",
+  "version": "0.0.1",
   "description": "ACP transport for @devagents — Zed, JetBrains, VS Code",
   "keywords": ["ai", "agents", "acp", "zed", "jetbrains", "vscode"],
   "license": "MIT",

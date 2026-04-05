@@ -1,6 +1,6 @@
 {
   "name": "@devlitusp/cli",
-  "version": "0.1.0",
+  "version": "0.0.1",
   "description": "CLI for @devagents — setup and check commands",
   "keywords": ["ai", "agents", "cli", "setup", "devtools"],
   "license": "MIT",
